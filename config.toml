@@ -2,3 +2,5 @@ baseURL = "https://howinator.io/"
 languageCode = "en-us"
 title = "My New Hugo Site"
 theme = "hugo-sustain"
+googleAnalytics = "UA-132905510-1"
+highlight = true
