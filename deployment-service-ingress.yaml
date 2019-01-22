@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: howinator/personal-blog:v7
+          image: howinator/personal-blog:v8
           ports:
             - containerPort: 80
           resources:
