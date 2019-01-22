@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+hugo
 
 git fetch --tags
 new_version=$((1 + $(git tags | ggrep -P "v\d+" | sed 's/v//g' | sort -n | tail -n 1)))
