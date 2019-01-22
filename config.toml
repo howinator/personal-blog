@@ -5,6 +5,28 @@ theme = "hugo-sustain"
 googleAnalytics = "UA-132905510-1"
 highlight = true
 [params]
-  author = "Howie Benefiel"
-  GitHubUser = "howinator"
-  authorimage = "headshot.jpg"
+    author = "Howie Benefiel"
+    description = "Howie's thoughts but on the internet"
+    avatar = "headshot.jpg"
+
+[permalinks]
+    post = "/:year/:month/:day/:slug"
+
+[params.social]
+    Github = "howinator"
+
+[[menu.main]]
+  name = "blog"
+  weight = 100
+  identifier = "blog"
+  url = "/blog/"
+[[menu.main]]
+  name = "projects"
+  identifier = "projects"
+  weight = 200
+  url = "/projects/"
+[[menu.main]]
+  name = "resume"
+  identifier = "resume"
+  weight = 300
+  url = "/resume/"
