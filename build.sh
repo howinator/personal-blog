@@ -6,8 +6,8 @@ new_version=$((1 + $(git tags | ggrep -P "v\d+" | sed 's/v//g' | sort -n | tail 
 git add -A
 git commit -S -m "Version to v$new_version"
 git tag "v$new_version"
-docker push origin
-docker push --tags
+git push origin
+git push --tags
 
 
 docker build -t howinator/personal-blog .
