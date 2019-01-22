@@ -11,5 +11,5 @@ docker push --tags
 
 
 docker build -t howinator/personal-blog .
-docker tag howinator/personal-blog "howinator/personal-blog:$new_version"
+docker tag howinator/personal-blog:latest "howinator/personal-blog:$new_version"
 docker push "howinator/personal-blog:$new_version"
