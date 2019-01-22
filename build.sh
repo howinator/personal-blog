@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
-set -x
+set -e
 
 git fetch --tags
 new_version=$((1 + $(git tags | ggrep -P "v\d+" | sed 's/v//g' | sort -n | tail -n 1)))
-git add -A && git commit -S -m "Version to $new_version"
-docker push origin && docker push --tags
+git add -A
+git commit -S -m "Version to v$new_version"
+git tag "$new_version"
+docker push origin
+docker push --tags
 
 
 docker build -t howinator/personal-blog .
