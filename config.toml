@@ -1,7 +1,10 @@
 baseURL = "https://howinator.io/"
 languageCode = "en-us"
-title = "My New Hugo Site"
+title = "howinator howinatin"
 theme = "hugo-sustain"
 googleAnalytics = "UA-132905510-1"
 highlight = true
-
+[params]
+  author = "Howie Benefiel"
+  GitHubUser = "howinator"
+  authorimage = "headshot.jpg"
