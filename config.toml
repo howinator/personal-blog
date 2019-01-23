@@ -22,13 +22,13 @@ highlight = true
   weight = 100
   identifier = "blog"
   url = "/blog/"
-[[menu.main]]
-  name = "projects"
-  identifier = "projects"
-  weight = 200
-  url = "/projects/"
+#[[menu.main]]
+#  name = "projects"
+#  identifier = "projects"
+#  weight = 200
+#  url = "/projects/"
 [[menu.main]]
   name = "resume"
   identifier = "resume"
   weight = 300
-  url = "/resume/"
+  url = "/resume.pdf"
