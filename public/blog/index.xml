@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>howinator howinatin</title>
-    <link>https://howinator.io/</link>
-    <description>Recent content on howinator howinatin</description>
+    <title>Blogs on howinator howinatin</title>
+    <link>https://howinator.io/blog/</link>
+    <description>Recent content in Blogs on howinator howinatin</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Tue, 22 Jan 2019 19:20:33 -0600</lastBuildDate>
     
-	<atom:link href="https://howinator.io/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://howinator.io/blog/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>

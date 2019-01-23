@@ -3,6 +3,17 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://howinator.io/blog/first-post/</loc>
+    <lastmod>2019-01-22T19:20:33-06:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://howinator.io/blog/</loc>
+    <lastmod>2019-01-22T19:20:33-06:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://howinator.io/categories/</loc>
     <priority>0</priority>
   </url>
@@ -14,6 +25,7 @@
   
   <url>
     <loc>https://howinator.io/</loc>
+    <lastmod>2019-01-22T19:20:33-06:00</lastmod>
     <priority>0</priority>
   </url>
   
