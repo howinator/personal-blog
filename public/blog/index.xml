@@ -12,12 +12,14 @@
     
     
     <item>
-      <title>First Post</title>
-      <link>https://howinator.io/blog/first-post/</link>
+      <title>An Intro</title>
+      <link>https://howinator.io/blog/first/</link>
       <pubDate>Tue, 22 Jan 2019 19:20:33 -0600</pubDate>
       
-      <guid>https://howinator.io/blog/first-post/</guid>
-      <description></description>
+      <guid>https://howinator.io/blog/first/</guid>
+      <description>I finally got around to making my blog and hosting it on my infra woooo.
+What you can expect from this blarg:
+ Technology Personal Projects Politics Climate Change  If you don&amp;rsquo;t want to here about any of these topics, feel free to stick to the category or categories which interest you most.</description>
     </item>
     
   </channel>
