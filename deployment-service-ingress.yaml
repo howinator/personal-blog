@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: howinator/personal-blog:v16
+          image: howinator/personal-blog:v21
           ports:
             - containerPort: 80
           resources:
@@ -54,7 +54,7 @@ metadata:
   namespace: prod
   annotations:
     kubernetes.io/ingress.class: nginx
-    certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/cluster-issuer: letsencrypt-prod
     app: personal-blog
     env: prod
 spec:
@@ -66,7 +66,7 @@ spec:
             backend:
               serviceName: personal-blog
               servicePort: 80
-    - host: www.howinator.io
+    - host: howinator.dev
       http:
         paths:
           - backend:
@@ -75,7 +75,7 @@ spec:
   tls:
     - hosts:
         - howinator.io
-        - www.howinator.io
+        - howinator.dev
       secretName: tls-howinator.io
 ---
 apiVersion: autoscaling/v1
@@ -91,7 +91,7 @@ spec:
     apiVersion: apps/v1beta1
     kind: Deployment
     name: personal-blog
-  minReplicas: 1
+  minReplicas: 2
   maxReplicas: 10
   targetCPUUtilizationPercentage: 80
 ---
