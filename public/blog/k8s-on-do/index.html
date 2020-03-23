@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Howie Benefiel" />
+    <meta name="description" content="Howie&#39;s thoughts but on the internet">
+    <link rel="shortcut icon" type="image/x-icon" href="https://howinator.io/img/favicon.ico">
+    <title>Personal Kubernetes Cluster on Digital Ocean With kubeadm</title>
+    <meta name="generator" content="Hugo 0.68.1" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="https://howinator.io/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+	ga('create', 'UA-132905510-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+
+  </head>
+
+  <body>
+    <div id="wrap">
+
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="https://howinator.io/"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="/blog/">BLOG</a></li>
+        
+        <li><a href="/resume.pdf">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="https://howinator.io/blog/k8s-on-do/">Personal Kubernetes Cluster on Digital Ocean With kubeadm</a></strong>
+          </h3>
+        </div>
+        <div class="blog-title">
+          <h4>
+          January 23, 2019
+            &nbsp;&nbsp;
+            
+            <span class="label label-success">tech</span>
+            
+            <span class="label label-success">k8s</span>
+            
+            <span class="label label-success">kubeadm</span>
+            
+            <span class="label label-success">digital ocean</span>
+            
+          </h4>
+        </div>
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              <h1 id="introduction">Introduction</h1>
+<p>I finally got around to bootstrapping a k8s cluster myself.
+I really had two motivations for doing this:</p>
+<ol>
+<li>I wanted a k8s cluster that I could easily deploy new personal projects to.</li>
+<li>I wanted a k8s cluster to hack on so I could further my understanding of k8s.</li>
+</ol>
+<p>I am now at at a point where I have a cluster which enables those motivations, so I decided it&rsquo;s time to write a blog post about it (served from the k8s-cluster itself 🕶).</p>
+<h1 id="decisions-decisions">Decisions, Decisions</h1>
+<p>Before I went into this, I had to make a couple design decisions to make.</p>
+<h2 id="infra-provider">Infra Provider</h2>
+<p>My first decision was which infrastructure provider I&rsquo;d build this on.
+This decision was primarily driven by cost.</p>
+<p>There were four main providers I looked at: GCP, AWS, DigitalOcean (DO), and OVH.
+My assumptions for measuring pricing were that I&rsquo;d mainly use machines with 2 CPUs and 4GB of RAM and the machines would be the latest generation if applicable.
+I&rsquo;ve tabulated the prices per month in the table below.</p>
+<table>
+<thead>
+<tr>
+<th>AWS (t2.medium)</th>
+<th>GCP (custom)</th>
+<th>DO (standard droplet)</th>
+<th>OVH (B2-7, 7GB RAM)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$29.95</td>
+<td>$43.39</td>
+<td>$20</td>
+<td>$26.4</td>
+</tr>
+</tbody>
+</table>
+<p>DigitalOcean is the clear winner in terms of pricing.</p>
+<p>I won&rsquo;t lie - I was wishing that GCP would&rsquo;ve been more competitive since I love working in GCP (topic for another blog post?), but GCP just didn&rsquo;t make financial sense.
+So, I decided to go with DO, and so far, it really hasn&rsquo;t left me wanting.</p>
+<h2 id="kubernetes-provisioning-methodologytooling">Kubernetes Provisioning Methodology/Tooling</h2>
+<p>Next, I had to decide on how I&rsquo;d actually provision this thing.
+The clear winner here is <code>kubeadm</code>.
+I&rsquo;ll give a quick rundown of the tools in the space and then explain why <code>kubeadm</code> is the winner.</p>
+<p><code>kubespray</code> is an Ansible-based tool for deploying k8s.
+With 5,000 stars, <code>kubespray</code> looks promising, but Ansible and I have a fraught relationship, so <code>kubespray</code> is out.</p>
+<p>Next up is <code>kops</code>.
+I&rsquo;ve used <code>kops</code> at work in the past with great success on <code>AWS</code>, but they only officially support AWS, so <code>kops</code> was out.</p>
+<p>Another tool I found is <code>bootkube</code>.
+<code>bootkube</code> is a tool to help k8s admins deploy a self-hosted k8s-cluster.
+Honestly, I think this approach is incredibly intellectually satisfying.
+Besides being logically sound, this self-hosted approach makes <a href="https://coreos.com/blog/self-hosted-kubernetes.html">installs, scale-outs, and upgrades</a>.
+The kubernetes team has a <a href="https://github.com/kubernetes/community/blob/master/contributors/design-proposals/cluster-lifecycle/self-hosted-kubernetes.md">great document about self-hosting</a>.</p>
+<p>As much as I like this approach, I&rsquo;m not planning on having a high-availability, multi-master cluster because of cost.
+Since I don&rsquo;t have a multi-master cluster, reboots of my master would kill my cluster and require manual intervention.
+I decided against this approach since I wanted a reliable cluster that will be robust in the face of me doing terrible things to the cluster.</p>
+<p>Finally, there&rsquo;s <code>kubeadm</code>.
+<code>kubeadm</code> has recently become the officially accepted tool for deploying Kubernetes clusters using community-accepted best practices.
+In fact, the tool is a <a href="https://github.com/kubernetes/kubernetes/tree/master/cmd/kubeadm">main line component in the Kubernetes repo</a>.
+<code>kubeadm</code> allows you to</p>
+
+              <hr>
+              <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div>
+            </div>
+          </div>
+          <hr>
+      
+        </div>
+      </div>
+      
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Made with ♥ by Howie.</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="https://howinator.io/js/docs.min.js"></script>
+<script src="https://howinator.io/js/main.js"></script>
+
+<script src="https://howinator.io/js/ie10-viewport-bug-workaround.js"></script>
+
+
+
+  </body>
+</html>
