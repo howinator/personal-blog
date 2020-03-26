@@ -3,6 +3,7 @@ title: "Day 7 - Shared Experience"
 date: 2020-03-22T13:43:33-05:00
 draft: false
 slug: covid-19-day-7
+tags: ['covid-19']
 ---
 
 The Covid-19 pandemic has to be the largest shared experience among humanity that we're all experiencing separately.
