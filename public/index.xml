@@ -6,10 +6,30 @@
     <description>Recent content on howinator howinatin</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 22 Mar 2020 13:43:33 -0500</lastBuildDate>
+    <lastBuildDate>Thu, 26 Mar 2020 21:35:21 -0500</lastBuildDate>
     
 	<atom:link href="https://howinator.io/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Optimized Oven</title>
+      <link>https://howinator.io/blog/optimized-oven/</link>
+      <pubDate>Thu, 26 Mar 2020 21:35:21 -0500</pubDate>
+      
+      <guid>https://howinator.io/blog/optimized-oven/</guid>
+      <description>Imagine you&amp;rsquo;re an oven manufacturer facing shareholder pressure. Your goal is to make an oven that works for most customers as cheaply as possible. You realize most of your American customers live in houses that are temperature-controlled to 75 degrees Fahrenheit.
+So, you start optimizing your oven to work in a 75 degree Fahrenheit environment. You rip out insulation. You install a temperature control system which works in a narrow range.</description>
+    </item>
+    
+    <item>
+      <title>Day 10 - Tech Therapeutics</title>
+      <link>https://howinator.io/blog/covid-day-10/</link>
+      <pubDate>Wed, 25 Mar 2020 21:55:47 -0500</pubDate>
+      
+      <guid>https://howinator.io/blog/covid-day-10/</guid>
+      <description>According to wiktionary, the word &amp;lsquo;therapeutic&amp;rsquo; comes from the greek word therapeutḗs, which is someone who &amp;ldquo;waits on another, an attendant&amp;rdquo;. As a software engineer, there&amp;rsquo;s not a whole lot I can do to affect the treatment of disease, a later meaning of the greek word. However, I can help help people wait on and attend to one another.
+I started a project with a friend yesterday to connect people that need help and people that can provide help.</description>
+    </item>
     
     <item>
       <title>Day 7 - Shared Experience</title>
