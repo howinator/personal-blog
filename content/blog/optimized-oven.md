@@ -1,10 +1,10 @@
 ---
-title: "Optimized Oven"
+title: "Day 11 - Optimized Oven"
 date: 2020-03-26T21:35:21-05:00
 draft: false
 categories: ['personal']
 tags: ['covid-19', 'systems']
-slug: "optimized-oven"
+slug: "covid-day-11"
 ---
 
 Imagine you're an oven manufacturer facing shareholder pressure.
