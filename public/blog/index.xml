@@ -6,10 +6,20 @@
     <description>Recent content in Blogs on howinator howinatin</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 26 Mar 2020 21:35:21 -0500</lastBuildDate>
+    <lastBuildDate>Fri, 27 Mar 2020 21:41:17 -0500</lastBuildDate>
     
 	<atom:link href="https://howinator.io/blog/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Boredom</title>
+      <link>https://howinator.io/blog/covid-day-12/</link>
+      <pubDate>Fri, 27 Mar 2020 21:41:17 -0500</pubDate>
+      
+      <guid>https://howinator.io/blog/covid-day-12/</guid>
+      <description>The thing they don&amp;rsquo;t tell you about quarantine is how freaking grating th boredom is. Or, I don&amp;rsquo;t even know if it&amp;rsquo;s boredom, it&amp;rsquo;s just the absence of anything to be excited about.
+Anyway, why aren&amp;rsquo;t auto-scaling groups controlled with a PID?</description>
+    </item>
     
     <item>
       <title>Day 11 - Optimized Oven</title>

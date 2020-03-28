@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: howinator/personal-blog:v21
+          image: howinator/personal-blog:v25
           ports:
             - containerPort: 80
           resources:
@@ -62,8 +62,7 @@ spec:
     - host: howinator.io
       http:
         paths:
-          - path: /
-            backend:
+          - backend:
               serviceName: personal-blog
               servicePort: 80
     - host: howinator.dev
