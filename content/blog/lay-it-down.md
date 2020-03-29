@@ -8,3 +8,6 @@ slug: "lay-it-down"
 ---
 
 Once all this is done, we're all going to lay it down and I can't wait for it.
+
+I watched an ALC (the TV show) taping today and got pretty emotional seeing everyone in Austin having so much fun.
+I can't wait to see my city return to that.
