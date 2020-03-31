@@ -1,10 +1,10 @@
 ---
-title: "Day 13 - USNS Comfort"
+title: "Day 14 - USNS Comfort"
 date: 2020-03-30T21:46:22-05:00
 draft: false
 categories: ['personal']
 tags: ['covid-19', 'personal']
-slug: "covid-day-13"
+slug: "covid-day-14"
 ---
 
 I'm not a particularly patriotic person, but seeing the USNS Comfort sail into New York Harbor and dock at Pier 90 swelled with me nationalistic pride.
