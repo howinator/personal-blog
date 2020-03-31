@@ -1,7 +1,7 @@
 ---
 title: "Day 13 - USNS Comfort"
 date: 2020-03-30T21:46:22-05:00
-draft: true
+draft: false
 categories: ['personal']
 tags: ['covid-19', 'personal']
 slug: "covid-day-13"
