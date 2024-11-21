@@ -1,7 +1,7 @@
 ---
 title: "Day 10 - Tech Therapeutics"
 date: 2020-03-25T21:55:47-05:00
-draft: false
+draft: true
 slug: covid-day-10
 tags: ['covid-19', 'tech', 'tech-for-good']
 ---

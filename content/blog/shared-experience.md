@@ -1,7 +1,7 @@
 ---
 title: "Day 7 - Shared Experience"
 date: 2020-03-22T13:43:33-05:00
-draft: false
+draft: true
 slug: covid-19-day-7
 tags: ['covid-19']
 ---

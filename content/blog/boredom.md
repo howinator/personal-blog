@@ -1,7 +1,7 @@
 ---
 title: "Day 12 - Boredom"
 date: 2020-03-27T21:41:17-05:00
-draft: false
+draft: true
 categories: ['']
 tags: ['covid-19', 'personal']
 slug: "covid-day-12"

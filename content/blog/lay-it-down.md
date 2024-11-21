@@ -1,7 +1,7 @@
 ---
 title: "Day 13 - Lay It Down"
 date: 2020-03-28T20:22:21-05:00
-draft: false
+draft: true
 categories: ['']
 tags: ['covid-19', 'personal']
 slug: "covid-day-13"

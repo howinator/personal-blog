@@ -1,7 +1,7 @@
 ---
 title: "Day 16 - Making Sense"
 date: 2020-04-02T00:54:20-05:00
-draft: false
+draft: true
 categories: ['personal']
 tags: ['covid-19', 'personal']
 slug: "covid-day-16"

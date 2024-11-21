@@ -1,7 +1,7 @@
 ---
 title: "Day 11 - Optimized Oven"
 date: 2020-03-26T21:35:21-05:00
-draft: false
+draft: true
 categories: ['personal']
 tags: ['covid-19', 'systems']
 slug: "covid-day-11"
