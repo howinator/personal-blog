@@ -2,38 +2,38 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Personal on howinator howinatin</title>
-    <link>https://howinator.io/tags/personal/</link>
+    <link>http://localhost:1313/tags/personal/</link>
     <description>Recent content in Personal on howinator howinatin</description>
     <generator>Hugo</generator>
     <language>en-us</language>
     <lastBuildDate>Thu, 02 Apr 2020 00:54:20 -0500</lastBuildDate>
-    <atom:link href="https://howinator.io/tags/personal/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/tags/personal/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Day 16 - Making Sense</title>
-      <link>https://howinator.io/blog/covid-day-16/</link>
+      <link>http://localhost:1313/blog/covid-day-16/</link>
       <pubDate>Thu, 02 Apr 2020 00:54:20 -0500</pubDate>
-      <guid>https://howinator.io/blog/covid-day-16/</guid>
+      <guid>http://localhost:1313/blog/covid-day-16/</guid>
       <description>&lt;p&gt;Something else I didn&amp;rsquo;t know about this quarantine is how little sense I&amp;rsquo;d be able to make of it all.&#xA;On a daily basis, I oscillate between feeling like it&amp;rsquo;s the end of the world and everything is normal.&lt;/p&gt;&#xA;&lt;p&gt;Like, within a one hour span, I&amp;rsquo;m refinancing my mortgage and reading an article about the coast guard telling cruise ships to turn away from American ports.&lt;/p&gt;</description>
     </item>
     <item>
       <title>Day 14 - USNS Comfort</title>
-      <link>https://howinator.io/blog/covid-day-14/</link>
+      <link>http://localhost:1313/blog/covid-day-14/</link>
       <pubDate>Mon, 30 Mar 2020 21:46:22 -0500</pubDate>
-      <guid>https://howinator.io/blog/covid-day-14/</guid>
+      <guid>http://localhost:1313/blog/covid-day-14/</guid>
       <description>&lt;p&gt;I&amp;rsquo;m not a particularly patriotic person, but seeing the USNS Comfort sail into New York Harbor and dock at Pier 90 swelled with me nationalistic pride.&#xA;Seeing the military arrive to assist the nation&amp;rsquo;s largest city isn&amp;rsquo;t something you witness many times in your lifetime.&lt;/p&gt;&#xA;&lt;p&gt;In particular &lt;a href=&#34;https://www.facebook.com/watch/?v=1097964027228407&#34;&gt;this video&lt;/a&gt; is just an awe-inspiring site.&#xA;Just look at that shit.&#xA;Every other time I&amp;rsquo;ve seen one of the Navy&amp;rsquo;s hospital shipts deployed, it&amp;rsquo;s been to a third-world country.&#xA;And then I see this video of that same ship coming to assist our largest company?&#xA;It really drives home the severity of the situation.&lt;/p&gt;</description>
     </item>
     <item>
       <title>Day 13 - Lay It Down</title>
-      <link>https://howinator.io/blog/covid-day-13/</link>
+      <link>http://localhost:1313/blog/covid-day-13/</link>
       <pubDate>Sat, 28 Mar 2020 20:22:21 -0500</pubDate>
-      <guid>https://howinator.io/blog/covid-day-13/</guid>
+      <guid>http://localhost:1313/blog/covid-day-13/</guid>
       <description>&lt;p&gt;Once all this is done, we&amp;rsquo;re all going to lay it down and I can&amp;rsquo;t wait for it.&lt;/p&gt;&#xA;&lt;p&gt;I watched an ALC (the TV show) taping today and got pretty emotional seeing everyone in Austin having so much fun.&#xA;I can&amp;rsquo;t wait to see my city return to that.&lt;/p&gt;</description>
     </item>
     <item>
       <title>Day 12 - Boredom</title>
-      <link>https://howinator.io/blog/covid-day-12/</link>
+      <link>http://localhost:1313/blog/covid-day-12/</link>
       <pubDate>Fri, 27 Mar 2020 21:41:17 -0500</pubDate>
-      <guid>https://howinator.io/blog/covid-day-12/</guid>
+      <guid>http://localhost:1313/blog/covid-day-12/</guid>
       <description>&lt;p&gt;The thing they don&amp;rsquo;t tell you about quarantine is how freaking grating the boredom is.&#xA;Or, I don&amp;rsquo;t even know if it&amp;rsquo;s boredom, it&amp;rsquo;s just the absence of anything to be excited about.&lt;/p&gt;&#xA;&lt;p&gt;Anyway, why aren&amp;rsquo;t auto-scaling groups controlled with a PID?&lt;/p&gt;</description>
     </item>
   </channel>

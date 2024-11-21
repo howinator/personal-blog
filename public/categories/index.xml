@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Categories on howinator howinatin</title>
-    <link>https://howinator.io/categories/</link>
+    <link>http://localhost:1313/categories/</link>
     <description>Recent content in Categories on howinator howinatin</description>
     <generator>Hugo</generator>
     <language>en-us</language>
     <lastBuildDate>Thu, 02 Apr 2020 00:54:20 -0500</lastBuildDate>
-    <atom:link href="https://howinator.io/categories/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/categories/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Personal</title>
-      <link>https://howinator.io/categories/personal/</link>
+      <link>http://localhost:1313/categories/personal/</link>
       <pubDate>Thu, 02 Apr 2020 00:54:20 -0500</pubDate>
-      <guid>https://howinator.io/categories/personal/</guid>
+      <guid>http://localhost:1313/categories/personal/</guid>
       <description></description>
     </item>
   </channel>

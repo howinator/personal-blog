@@ -2,58 +2,58 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://howinator.io/blog/</loc>
+    <loc>http://localhost:1313/blog/</loc>
     <lastmod>2021-11-12T18:42:04-08:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/</loc>
+    <loc>http://localhost:1313/</loc>
     <lastmod>2021-11-12T18:42:04-08:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/categories/</loc>
+    <loc>http://localhost:1313/categories/</loc>
     <lastmod>2020-04-02T00:54:20-05:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/tags/covid-19/</loc>
+    <loc>http://localhost:1313/tags/covid-19/</loc>
     <lastmod>2020-04-02T00:54:20-05:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/blog/covid-day-16/</loc>
+    <loc>http://localhost:1313/blog/covid-day-16/</loc>
     <lastmod>2020-04-02T00:54:20-05:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/tags/personal/</loc>
+    <loc>http://localhost:1313/tags/personal/</loc>
     <lastmod>2020-04-02T00:54:20-05:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/categories/personal/</loc>
+    <loc>http://localhost:1313/categories/personal/</loc>
     <lastmod>2020-04-02T00:54:20-05:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/tags/</loc>
+    <loc>http://localhost:1313/tags/</loc>
     <lastmod>2020-04-02T00:54:20-05:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/blog/covid-day-14/</loc>
+    <loc>http://localhost:1313/blog/covid-day-14/</loc>
     <lastmod>2020-03-30T21:46:22-05:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/blog/covid-day-13/</loc>
+    <loc>http://localhost:1313/blog/covid-day-13/</loc>
     <lastmod>2020-03-28T20:22:21-05:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/blog/covid-day-12/</loc>
+    <loc>http://localhost:1313/blog/covid-day-12/</loc>
     <lastmod>2020-03-27T21:41:17-05:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/blog/covid-day-11/</loc>
+    <loc>http://localhost:1313/blog/covid-day-11/</loc>
     <lastmod>2020-03-26T21:35:21-05:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/tags/systems/</loc>
+    <loc>http://localhost:1313/tags/systems/</loc>
     <lastmod>2020-03-26T21:35:21-05:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/blog/covid-day-10/</loc>
+    <loc>http://localhost:1313/blog/covid-day-10/</loc>
     <lastmod>2020-03-25T21:55:47-05:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/tags/tech/</loc>
+    <loc>http://localhost:1313/tags/tech/</loc>
     <lastmod>2020-03-25T21:55:47-05:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/tags/tech-for-good/</loc>
+    <loc>http://localhost:1313/tags/tech-for-good/</loc>
     <lastmod>2020-03-25T21:55:47-05:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/blog/covid-19-day-7/</loc>
+    <loc>http://localhost:1313/blog/covid-19-day-7/</loc>
     <lastmod>2020-03-22T13:43:33-05:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/blog/first/</loc>
+    <loc>http://localhost:1313/blog/first/</loc>
     <lastmod>2019-01-22T19:20:33-06:00</lastmod>
   </url>
 </urlset>
