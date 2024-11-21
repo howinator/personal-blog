@@ -2,66 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Blogs on howinator howinatin</title>
-    <link>http://localhost:1313/blog/</link>
+    <link>https://howinator.io/blog/</link>
     <description>Recent content in Blogs on howinator howinatin</description>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 02 Apr 2020 00:54:20 -0500</lastBuildDate>
-    <atom:link href="http://localhost:1313/blog/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>Day 16 - Making Sense</title>
-      <link>http://localhost:1313/blog/covid-day-16/</link>
-      <pubDate>Thu, 02 Apr 2020 00:54:20 -0500</pubDate>
-      <guid>http://localhost:1313/blog/covid-day-16/</guid>
-      <description>&lt;p&gt;Something else I didn&amp;rsquo;t know about this quarantine is how little sense I&amp;rsquo;d be able to make of it all.&#xA;On a daily basis, I oscillate between feeling like it&amp;rsquo;s the end of the world and everything is normal.&lt;/p&gt;&#xA;&lt;p&gt;Like, within a one hour span, I&amp;rsquo;m refinancing my mortgage and reading an article about the coast guard telling cruise ships to turn away from American ports.&lt;/p&gt;</description>
-    </item>
-    <item>
-      <title>Day 14 - USNS Comfort</title>
-      <link>http://localhost:1313/blog/covid-day-14/</link>
-      <pubDate>Mon, 30 Mar 2020 21:46:22 -0500</pubDate>
-      <guid>http://localhost:1313/blog/covid-day-14/</guid>
-      <description>&lt;p&gt;I&amp;rsquo;m not a particularly patriotic person, but seeing the USNS Comfort sail into New York Harbor and dock at Pier 90 swelled with me nationalistic pride.&#xA;Seeing the military arrive to assist the nation&amp;rsquo;s largest city isn&amp;rsquo;t something you witness many times in your lifetime.&lt;/p&gt;&#xA;&lt;p&gt;In particular &lt;a href=&#34;https://www.facebook.com/watch/?v=1097964027228407&#34;&gt;this video&lt;/a&gt; is just an awe-inspiring site.&#xA;Just look at that shit.&#xA;Every other time I&amp;rsquo;ve seen one of the Navy&amp;rsquo;s hospital shipts deployed, it&amp;rsquo;s been to a third-world country.&#xA;And then I see this video of that same ship coming to assist our largest company?&#xA;It really drives home the severity of the situation.&lt;/p&gt;</description>
-    </item>
-    <item>
-      <title>Day 13 - Lay It Down</title>
-      <link>http://localhost:1313/blog/covid-day-13/</link>
-      <pubDate>Sat, 28 Mar 2020 20:22:21 -0500</pubDate>
-      <guid>http://localhost:1313/blog/covid-day-13/</guid>
-      <description>&lt;p&gt;Once all this is done, we&amp;rsquo;re all going to lay it down and I can&amp;rsquo;t wait for it.&lt;/p&gt;&#xA;&lt;p&gt;I watched an ALC (the TV show) taping today and got pretty emotional seeing everyone in Austin having so much fun.&#xA;I can&amp;rsquo;t wait to see my city return to that.&lt;/p&gt;</description>
-    </item>
-    <item>
-      <title>Day 12 - Boredom</title>
-      <link>http://localhost:1313/blog/covid-day-12/</link>
-      <pubDate>Fri, 27 Mar 2020 21:41:17 -0500</pubDate>
-      <guid>http://localhost:1313/blog/covid-day-12/</guid>
-      <description>&lt;p&gt;The thing they don&amp;rsquo;t tell you about quarantine is how freaking grating the boredom is.&#xA;Or, I don&amp;rsquo;t even know if it&amp;rsquo;s boredom, it&amp;rsquo;s just the absence of anything to be excited about.&lt;/p&gt;&#xA;&lt;p&gt;Anyway, why aren&amp;rsquo;t auto-scaling groups controlled with a PID?&lt;/p&gt;</description>
-    </item>
-    <item>
-      <title>Day 11 - Optimized Oven</title>
-      <link>http://localhost:1313/blog/covid-day-11/</link>
-      <pubDate>Thu, 26 Mar 2020 21:35:21 -0500</pubDate>
-      <guid>http://localhost:1313/blog/covid-day-11/</guid>
-      <description>&lt;p&gt;Imagine you&amp;rsquo;re an oven manufacturer facing shareholder pressure.&#xA;Your goal is to make an oven that works for most customers as cheaply as possible.&#xA;You realize most of your American customers live in houses that are temperature-controlled to 75 degrees Fahrenheit.&lt;/p&gt;&#xA;&lt;p&gt;So, you start optimizing your oven to work in a 75 degree Fahrenheit environment.&#xA;You rip out insulation.&#xA;You install a temperature control system which works in a narrow range.&#xA;You adjust the natural gas valve so that, instead of being durable enough to switch on and off repeatedly, it delivers a constant stream of gas.&lt;/p&gt;</description>
-    </item>
-    <item>
-      <title>Day 10 - Tech Therapeutics</title>
-      <link>http://localhost:1313/blog/covid-day-10/</link>
-      <pubDate>Wed, 25 Mar 2020 21:55:47 -0500</pubDate>
-      <guid>http://localhost:1313/blog/covid-day-10/</guid>
-      <description>&lt;p&gt;According to &lt;a href=&#34;https://en.wiktionary.org/wiki/therapeutic&#34;&gt;wiktionary&lt;/a&gt;, the word &amp;rsquo;therapeutic&amp;rsquo; comes from the greek word therapeutḗs, which is someone who &amp;ldquo;waits on another, an attendant&amp;rdquo;.&#xA;As a software engineer, there&amp;rsquo;s not a whole lot I can do to affect the treatment of disease, a later meaning of the greek word.&#xA;However, I can help help people wait on and attend to one another.&lt;/p&gt;&#xA;&lt;p&gt;I started a project with a friend yesterday to connect people that need help and people that can provide help.&#xA;Stay tuned for more.&lt;/p&gt;</description>
-    </item>
-    <item>
-      <title>Day 7 - Shared Experience</title>
-      <link>http://localhost:1313/blog/covid-19-day-7/</link>
-      <pubDate>Sun, 22 Mar 2020 13:43:33 -0500</pubDate>
-      <guid>http://localhost:1313/blog/covid-19-day-7/</guid>
-      <description>&lt;p&gt;The Covid-19 pandemic has to be the largest shared experience among humanity that we&amp;rsquo;re all experiencing separately.&#xA;I can&amp;rsquo;t think of another episode in modern history where nearly every human experienced in their own way.&#xA;And there really can&amp;rsquo;t be another event where we experienced completely separate from one another.&lt;/p&gt;&#xA;&lt;p&gt;Think about something like 9/11.&#xA;Only a few of us truly had to take some sort of action during 9/11.&#xA;Some of us had to run away.&#xA;Some of us gave blood.&#xA;But not all of us had to take action to avoid greater calamity.&lt;/p&gt;</description>
-    </item>
+    <lastBuildDate>Tue, 22 Jan 2019 19:20:33 -0600</lastBuildDate>
+    <atom:link href="https://howinator.io/blog/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>An Intro</title>
-      <link>http://localhost:1313/blog/first/</link>
+      <link>https://howinator.io/blog/first/</link>
       <pubDate>Tue, 22 Jan 2019 19:20:33 -0600</pubDate>
-      <guid>http://localhost:1313/blog/first/</guid>
+      <guid>https://howinator.io/blog/first/</guid>
       <description>&lt;p&gt;I finally got around to making my blog and hosting it on my infra woooo.&lt;/p&gt;&#xA;&lt;p&gt;What you can expect from this blarg:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Technology&lt;/li&gt;&#xA;&lt;li&gt;Personal Projects&lt;/li&gt;&#xA;&lt;li&gt;Politics&lt;/li&gt;&#xA;&lt;li&gt;Climate Change&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;If you don&amp;rsquo;t want to here about any of these topics, feel free to stick to the category or categories which interest you most.&lt;/p&gt;</description>
     </item>
   </channel>
