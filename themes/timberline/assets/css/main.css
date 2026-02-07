@@ -255,52 +255,52 @@ img {
 .archive-card:hover .seg-ml { animation: fold-ml 5s ease-in-out infinite; }
 .archive-card:hover .seg-tl { animation: fold-tl 5s ease-in-out infinite; }
 
-/* Wave 1: bot-right (0%–50%), folds left & up */
+/* Wave 1: bot-right (0%–50%), contracts toward trunk & folds in */
 @keyframes fold-br {
-  0%        { transform: translate(0, 0) rotate(0); }
-  20%       { transform: translate(-12px, -28px) rotate(-2deg); }
-  35%       { transform: translate(-3px, -6px) rotate(-0.4deg); }
-  50%, 100% { transform: translate(0, 0) rotate(0); }
+  0%        { transform: translate(0, 0) scaleX(1) rotate(0); }
+  20%       { transform: translate(-2.5px, -5px) scaleX(0.89) rotate(-0.9deg); }
+  38%       { transform: translate(0.75px, 1px) scaleX(1.02) rotate(0.15deg); }
+  50%, 100% { transform: translate(0, 0) scaleX(1) rotate(0); }
 }
 
-/* Wave 2: mid-right (16%–66%), folds left & up */
+/* Wave 2: mid-right (16%–66%), contracts toward trunk & folds in */
 @keyframes fold-mr {
-  0%, 16%   { transform: translate(0, 0) rotate(0); }
-  36%       { transform: translate(-12px, -28px) rotate(-2deg); }
-  51%       { transform: translate(-3px, -6px) rotate(-0.4deg); }
-  66%, 100% { transform: translate(0, 0) rotate(0); }
+  0%, 16%   { transform: translate(0, 0) scaleX(1) rotate(0); }
+  36%       { transform: translate(-2.5px, -5px) scaleX(0.89) rotate(-0.9deg); }
+  54%       { transform: translate(0.75px, 1px) scaleX(1.02) rotate(0.15deg); }
+  66%, 100% { transform: translate(0, 0) scaleX(1) rotate(0); }
 }
 
-/* Wave 2: bot-left (16%–66%), folds right & up */
+/* Wave 2: bot-left (16%–66%), contracts toward trunk & folds in */
 @keyframes fold-bl {
-  0%, 16%   { transform: translate(0, 0) rotate(0); }
-  36%       { transform: translate(12px, -28px) rotate(2deg); }
-  51%       { transform: translate(3px, -6px) rotate(0.4deg); }
-  66%, 100% { transform: translate(0, 0) rotate(0); }
+  0%, 16%   { transform: translate(0, 0) scaleX(1) rotate(0); }
+  36%       { transform: translate(2.5px, -5px) scaleX(0.89) rotate(0.9deg); }
+  54%       { transform: translate(-0.75px, 1px) scaleX(1.02) rotate(-0.15deg); }
+  66%, 100% { transform: translate(0, 0) scaleX(1) rotate(0); }
 }
 
-/* Wave 3: top-right (32%–82%), folds left & up */
+/* Wave 3: top-right (32%–82%), contracts toward trunk & folds in */
 @keyframes fold-tr {
-  0%, 32%   { transform: translate(0, 0) rotate(0); }
-  52%       { transform: translate(-12px, -28px) rotate(-2deg); }
-  67%       { transform: translate(-3px, -6px) rotate(-0.4deg); }
-  82%, 100% { transform: translate(0, 0) rotate(0); }
+  0%, 32%   { transform: translate(0, 0) scaleX(1) rotate(0); }
+  52%       { transform: translate(-2.5px, -5px) scaleX(0.89) rotate(-0.9deg); }
+  70%       { transform: translate(0.75px, 1px) scaleX(1.02) rotate(0.15deg); }
+  82%, 100% { transform: translate(0, 0) scaleX(1) rotate(0); }
 }
 
-/* Wave 3: mid-left (32%–82%), folds right & up */
+/* Wave 3: mid-left (32%–82%), contracts toward trunk & folds in */
 @keyframes fold-ml {
-  0%, 32%   { transform: translate(0, 0) rotate(0); }
-  52%       { transform: translate(12px, -28px) rotate(2deg); }
-  67%       { transform: translate(3px, -6px) rotate(0.4deg); }
-  82%, 100% { transform: translate(0, 0) rotate(0); }
+  0%, 32%   { transform: translate(0, 0) scaleX(1) rotate(0); }
+  52%       { transform: translate(2.5px, -5px) scaleX(0.89) rotate(0.9deg); }
+  70%       { transform: translate(-0.75px, 1px) scaleX(1.02) rotate(-0.15deg); }
+  82%, 100% { transform: translate(0, 0) scaleX(1) rotate(0); }
 }
 
-/* Wave 4: top-left (50%–100%), folds right & up */
+/* Wave 4: top-left (50%–100%), contracts toward trunk & folds in */
 @keyframes fold-tl {
-  0%, 50%   { transform: translate(0, 0) rotate(0); }
-  70%       { transform: translate(12px, -28px) rotate(2deg); }
-  85%       { transform: translate(3px, -6px) rotate(0.4deg); }
-  100%      { transform: translate(0, 0) rotate(0); }
+  0%, 50%   { transform: translate(0, 0) scaleX(1) rotate(0); }
+  70%       { transform: translate(2.5px, -5px) scaleX(0.89) rotate(0.9deg); }
+  88%       { transform: translate(-0.75px, 1px) scaleX(1.02) rotate(-0.15deg); }
+  100%      { transform: translate(0, 0) scaleX(1) rotate(0); }
 }
 
 .card-body {
