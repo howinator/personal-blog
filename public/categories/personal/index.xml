@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Personal on howinator howinatin</title>
-    <link>https://howinator.io/categories/personal/</link>
+    <link>http://localhost:1313/categories/personal/</link>
     <description>Recent content in Personal on howinator howinatin</description>
     <generator>Hugo</generator>
     <language>en-us</language>
     <lastBuildDate>Tue, 22 Jan 2019 19:20:33 -0600</lastBuildDate>
-    <atom:link href="https://howinator.io/categories/personal/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/categories/personal/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>An Intro</title>
-      <link>https://howinator.io/blog/first/</link>
+      <link>http://localhost:1313/blog/first/</link>
       <pubDate>Tue, 22 Jan 2019 19:20:33 -0600</pubDate>
-      <guid>https://howinator.io/blog/first/</guid>
+      <guid>http://localhost:1313/blog/first/</guid>
       <description>&lt;p&gt;I finally got around to making my blog and hosting it on my infra woooo.&lt;/p&gt;&#xA;&lt;p&gt;What you can expect from this blarg:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Technology&lt;/li&gt;&#xA;&lt;li&gt;Personal Projects&lt;/li&gt;&#xA;&lt;li&gt;Politics&lt;/li&gt;&#xA;&lt;li&gt;Climate Change&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;If you don&amp;rsquo;t want to here about any of these topics, feel free to stick to the category or categories which interest you most.&lt;/p&gt;</description>
     </item>
   </channel>

@@ -9,7 +9,7 @@ html, body {
 
 /* Wrapper for page content to push down footer */
 #wrap {
-  padding-bottom: 50px;
+  padding-bottom: 50px;	
   min-height: 100%;
   height: auto;
   /* Negative indent footer by its height */
@@ -195,5 +195,5 @@ div.footer{
 /*.footer {
   height: 50px;
   padding-bottom: 15px;
-
+  
 }*/

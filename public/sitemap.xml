@@ -2,21 +2,24 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://howinator.io/blog/</loc>
-    <lastmod>2021-11-12T18:42:04-08:00</lastmod>
+    <loc>http://localhost:1313/blog/</loc>
+    <lastmod>2026-02-07T11:05:02-08:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/</loc>
-    <lastmod>2021-11-12T18:42:04-08:00</lastmod>
+    <loc>http://localhost:1313/</loc>
+    <lastmod>2026-02-07T11:05:02-08:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/blog/first/</loc>
+    <loc>http://localhost:1313/blog/mirace-of-building/</loc>
+    <lastmod>2026-02-07T11:05:02-08:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/blog/first/</loc>
     <lastmod>2019-01-22T19:20:33-06:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/categories/</loc>
+    <loc>http://localhost:1313/categories/</loc>
     <lastmod>2019-01-22T19:20:33-06:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/categories/personal/</loc>
+    <loc>http://localhost:1313/categories/personal/</loc>
     <lastmod>2019-01-22T19:20:33-06:00</lastmod>
   </url><url>
-    <loc>https://howinator.io/tags/</loc>
+    <loc>http://localhost:1313/tags/</loc>
   </url>
 </urlset>
