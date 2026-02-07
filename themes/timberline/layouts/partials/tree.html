@@ -1,4 +1,22 @@
+{{ $i := .index }}
 <svg class="tree-svg" viewBox="0 0 484 1117"
      xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <use href="#fir"/>
+  <defs>
+    <clipPath id="tk-{{ $i }}"><rect x="200" y="0" width="84" height="1117"/></clipPath>
+    <clipPath id="tl-{{ $i }}"><rect x="0" y="0" width="200" height="372"/></clipPath>
+    <clipPath id="ml-{{ $i }}"><rect x="0" y="372" width="200" height="373"/></clipPath>
+    <clipPath id="bl-{{ $i }}"><rect x="0" y="745" width="200" height="372"/></clipPath>
+    <clipPath id="tr-{{ $i }}"><rect x="284" y="0" width="200" height="372"/></clipPath>
+    <clipPath id="mr-{{ $i }}"><rect x="284" y="372" width="200" height="373"/></clipPath>
+    <clipPath id="br-{{ $i }}"><rect x="284" y="745" width="200" height="372"/></clipPath>
+  </defs>
+  <!-- Trunk (static) -->
+  <g clip-path="url(#tk-{{ $i }})"><use href="#fir"/></g>
+  <!-- Branch segments (animated on hover) -->
+  <g class="seg seg-br" clip-path="url(#br-{{ $i }})"><use href="#fir"/></g>
+  <g class="seg seg-mr" clip-path="url(#mr-{{ $i }})"><use href="#fir"/></g>
+  <g class="seg seg-bl" clip-path="url(#bl-{{ $i }})"><use href="#fir"/></g>
+  <g class="seg seg-tr" clip-path="url(#tr-{{ $i }})"><use href="#fir"/></g>
+  <g class="seg seg-ml" clip-path="url(#ml-{{ $i }})"><use href="#fir"/></g>
+  <g class="seg seg-tl" clip-path="url(#tl-{{ $i }})"><use href="#fir"/></g>
 </svg>

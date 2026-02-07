@@ -232,23 +232,75 @@ img {
   color: var(--accent);
 }
 
-/* --- Tree SVG & Wind Rustle --- */
+/* --- Tree SVG & Branch Fold Animation --- */
 .tree-svg {
   display: block;
   width: 100%;
   height: 100%;
-  filter: brightness(1);  /* pre-establish compositing layer to prevent layout shift on hover */
 }
 
-.archive-card:hover .tree-svg {
-  animation: rustle 3s step-end infinite;
+/* Transform origins at trunk-facing edge, vertical center of each segment */
+.seg-br { transform-origin: 284px 931px; }
+.seg-mr { transform-origin: 284px 558px; }
+.seg-tr { transform-origin: 284px 186px; }
+.seg-bl { transform-origin: 200px 931px; }
+.seg-ml { transform-origin: 200px 558px; }
+.seg-tl { transform-origin: 200px 186px; }
+
+/* Hover triggers — animation only while hovering */
+.archive-card:hover .seg-br { animation: fold-br 5s ease-in-out infinite; }
+.archive-card:hover .seg-mr { animation: fold-mr 5s ease-in-out infinite; }
+.archive-card:hover .seg-bl { animation: fold-bl 5s ease-in-out infinite; }
+.archive-card:hover .seg-tr { animation: fold-tr 5s ease-in-out infinite; }
+.archive-card:hover .seg-ml { animation: fold-ml 5s ease-in-out infinite; }
+.archive-card:hover .seg-tl { animation: fold-tl 5s ease-in-out infinite; }
+
+/* Wave 1: bot-right (0%–50%), folds left & up */
+@keyframes fold-br {
+  0%        { transform: translate(0, 0) rotate(0); }
+  20%       { transform: translate(-12px, -28px) rotate(-2deg); }
+  35%       { transform: translate(-3px, -6px) rotate(-0.4deg); }
+  50%, 100% { transform: translate(0, 0) rotate(0); }
 }
 
-@keyframes rustle {
-  0%   { filter: url(#w1); }
-  25%  { filter: url(#w3); }
-  50%  { filter: url(#w5); }
-  75%  { filter: url(#w7); }
+/* Wave 2: mid-right (16%–66%), folds left & up */
+@keyframes fold-mr {
+  0%, 16%   { transform: translate(0, 0) rotate(0); }
+  36%       { transform: translate(-12px, -28px) rotate(-2deg); }
+  51%       { transform: translate(-3px, -6px) rotate(-0.4deg); }
+  66%, 100% { transform: translate(0, 0) rotate(0); }
+}
+
+/* Wave 2: bot-left (16%–66%), folds right & up */
+@keyframes fold-bl {
+  0%, 16%   { transform: translate(0, 0) rotate(0); }
+  36%       { transform: translate(12px, -28px) rotate(2deg); }
+  51%       { transform: translate(3px, -6px) rotate(0.4deg); }
+  66%, 100% { transform: translate(0, 0) rotate(0); }
+}
+
+/* Wave 3: top-right (32%–82%), folds left & up */
+@keyframes fold-tr {
+  0%, 32%   { transform: translate(0, 0) rotate(0); }
+  52%       { transform: translate(-12px, -28px) rotate(-2deg); }
+  67%       { transform: translate(-3px, -6px) rotate(-0.4deg); }
+  82%, 100% { transform: translate(0, 0) rotate(0); }
+}
+
+/* Wave 3: mid-left (32%–82%), folds right & up */
+@keyframes fold-ml {
+  0%, 32%   { transform: translate(0, 0) rotate(0); }
+  52%       { transform: translate(12px, -28px) rotate(2deg); }
+  67%       { transform: translate(3px, -6px) rotate(0.4deg); }
+  82%, 100% { transform: translate(0, 0) rotate(0); }
+}
+
+/* Wave 4: top-left (50%–100%), folds right & up */
+@keyframes fold-tl {
+  0%, 50%   { transform: translate(0, 0) rotate(0); }
+  70%       { transform: translate(12px, -28px) rotate(2deg); }
+  85%       { transform: translate(3px, -6px) rotate(0.4deg); }
+  100%      { transform: translate(0, 0) rotate(0); }
 }
 
 .card-body {
