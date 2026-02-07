@@ -6,8 +6,36 @@
     <description>Recent content in Personal on howinator howinatin</description>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 22 Jan 2019 19:20:33 -0600</lastBuildDate>
+    <lastBuildDate>Mon, 14 Sep 2020 22:21:49 -0500</lastBuildDate>
     <atom:link href="https://howinator.io/categories/personal/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>We Need GPL for the Climate</title>
+      <link>https://howinator.io/2020/09/14/gpl-climate/</link>
+      <pubDate>Mon, 14 Sep 2020 22:21:49 -0500</pubDate>
+      <guid>https://howinator.io/2020/09/14/gpl-climate/</guid>
+      <description>&lt;h1 id=&#34;motivation&#34;&gt;Motivation&lt;/h1&gt;&#xA;&lt;p&gt;I recently did a quick calculation to determine how much CO₂e would be emitted if I shipped a change which increased the size of a code artifact which we serve to our customers.&#xA;Based off &lt;a href=&#34;https://www.aceee.org/files/proceedings/2012/data/papers/0193-000409.pdf&#34;&gt;this article from the ACEEE&lt;/a&gt;, I found that a 1kb change to this artifact would result in ~6 metric tons of CO₂e being emitted yearly into the atmosphere.&#xA;This was surprising to me.&#xA;I work on software - the tech industry doesn&amp;rsquo;t cause climate change.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Day 16 - Making Sense</title>
+      <link>https://howinator.io/2020/04/02/covid-day-16/</link>
+      <pubDate>Thu, 02 Apr 2020 00:54:20 -0500</pubDate>
+      <guid>https://howinator.io/2020/04/02/covid-day-16/</guid>
+      <description>&lt;p&gt;Something else I didn&amp;rsquo;t know about this quarantine is how little sense I&amp;rsquo;d be able to make of it all.&#xA;On a daily basis, I oscillate between feeling like it&amp;rsquo;s the end of the world and everything is normal.&lt;/p&gt;&#xA;&lt;p&gt;Like, within a one hour span, I&amp;rsquo;m refinancing my mortgage and reading an article about the coast guard telling cruise ships to turn away from American ports.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Day 14 - USNS Comfort</title>
+      <link>https://howinator.io/2020/03/30/covid-day-14/</link>
+      <pubDate>Mon, 30 Mar 2020 21:46:22 -0500</pubDate>
+      <guid>https://howinator.io/2020/03/30/covid-day-14/</guid>
+      <description>&lt;p&gt;I&amp;rsquo;m not a particularly patriotic person, but seeing the USNS Comfort sail into New York Harbor and dock at Pier 90 swelled with me nationalistic pride.&#xA;Seeing the military arrive to assist the nation&amp;rsquo;s largest city isn&amp;rsquo;t something you witness many times in your lifetime.&lt;/p&gt;&#xA;&lt;p&gt;In particular &lt;a href=&#34;https://www.facebook.com/watch/?v=1097964027228407&#34;&gt;this video&lt;/a&gt; is just an awe-inspiring site.&#xA;Just look at that shit.&#xA;Every other time I&amp;rsquo;ve seen one of the Navy&amp;rsquo;s hospital shipts deployed, it&amp;rsquo;s been to a third-world country.&#xA;And then I see this video of that same ship coming to assist our largest company?&#xA;It really drives home the severity of the situation.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Day 11 - Optimized Oven</title>
+      <link>https://howinator.io/2020/03/26/covid-day-11/</link>
+      <pubDate>Thu, 26 Mar 2020 21:35:21 -0500</pubDate>
+      <guid>https://howinator.io/2020/03/26/covid-day-11/</guid>
+      <description>&lt;p&gt;Imagine you&amp;rsquo;re an oven manufacturer facing shareholder pressure.&#xA;Your goal is to make an oven that works for most customers as cheaply as possible.&#xA;You realize most of your American customers live in houses that are temperature-controlled to 75 degrees Fahrenheit.&lt;/p&gt;&#xA;&lt;p&gt;So, you start optimizing your oven to work in a 75 degree Fahrenheit environment.&#xA;You rip out insulation.&#xA;You install a temperature control system which works in a narrow range.&#xA;You adjust the natural gas valve so that, instead of being durable enough to switch on and off repeatedly, it delivers a constant stream of gas.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>An Intro</title>
       <link>https://howinator.io/2019/01/22/first/</link>

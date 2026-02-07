@@ -4,8 +4,8 @@
   <div class="archive-list">
     {{ range .Pages.ByDate.Reverse }}
     <article class="archive-card">
-      <div class="branch-decoration">
-        {{ partial "branch.html" }}
+      <div class="tree-decoration">
+        {{ partial "tree.html" }}
       </div>
       <div class="card-body">
         <a class="archive-link" href="{{ .RelPermalink }}">{{ .Title }}</a>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Kubeadm on howinator howinatin</title>
+    <link>https://howinator.io/tags/kubeadm/</link>
+    <description>Recent content in Kubeadm on howinator howinatin</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 23 Jan 2019 22:49:40 -0600</lastBuildDate>
+    <atom:link href="https://howinator.io/tags/kubeadm/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Personal Kubernetes Cluster on Digital Ocean With kubeadm</title>
+      <link>https://howinator.io/2019/01/23/k8s-on-do/</link>
+      <pubDate>Wed, 23 Jan 2019 22:49:40 -0600</pubDate>
+      <guid>https://howinator.io/2019/01/23/k8s-on-do/</guid>
+      <description>&lt;h1 id=&#34;introduction&#34;&gt;Introduction&lt;/h1&gt;&#xA;&lt;p&gt;I finally got around to bootstrapping a k8s cluster myself.&#xA;I really had two motivations for doing this:&lt;/p&gt;&#xA;&lt;ol&gt;&#xA;&lt;li&gt;I wanted a k8s cluster that I could easily deploy new personal projects to.&lt;/li&gt;&#xA;&lt;li&gt;I wanted a k8s cluster to hack on so I could further my understanding of k8s.&lt;/li&gt;&#xA;&lt;/ol&gt;&#xA;&lt;p&gt;I am now at at a point where I have a cluster which enables those motivations, so I decided it&amp;rsquo;s time to write a blog post about it (served from the k8s-cluster itself &amp;#x1f60e;).&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
