@@ -1,51 +1,37 @@
 baseURL = "https://howinator.io/"
 languageCode = "en-us"
 title = "howinator howinatin"
-theme = "hugo-sustain"
-googleAnalytics = "UA-132905510-1"
-highlight = true
+theme = "timberline"
 sectionPagesMenu = true
 enableEmoji = true
+
 [params]
     author = "Howie Benefiel"
     description = "Howie's thoughts but on the internet"
     avatar = "headshot.jpg"
+    tagline = "Builder. People & Product."
 
 [permalinks]
-    post = "/:year/:month/:day/:slug"
+    blog = "/:year/:month/:day/:slug"
 
 [params.social]
     Github = "howinator"
     Twitter = "howiesxsw"
     Email = "blog@howinator.io"
+
+[markup]
+  [markup.highlight]
+    noClasses = false
+    guessSyntax = true
+
 [menu]
   [[menu.main]]
     name = "blog"
     weight = 100
     identifier = "blog"
     url = "/blog/"
-#[[menu.main]]
-#  name = "projects"
-#  identifier = "projects"
-#  weight = 200
-#  url = "/projects/"
   [[menu.main]]
     name = "resume"
     identifier = "resume"
     weight = 300
     url = "/resume.pdf"
-  [[menu.blog]]
-    name = 'all posts'
-    identifier = 'all'
-    weight = 100
-    url = '/blog/'
-  [[menu.blog]]
-    name = 'tags'
-    identifier = 'tags'
-    weight = 200
-    url = '/tags/'
-  [[menu.categories]]
-    name = 'categories'
-    identifier = 'categories'
-    weight = 300
-    url = '/categories'

@@ -1,0 +1,10 @@
+name = "Timberline"
+license = "MIT"
+licenselink = "https://github.com/howinator/personal-blog/blob/master/LICENSE"
+description = "A handcrafted Hugo theme — techy PNW, parchment tones, deep forest greens"
+homepage = "https://howinator.io/"
+min_version = "0.112.0"
+
+[author]
+  name = "Howie Benefiel"
+  homepage = "https://howinator.io/"

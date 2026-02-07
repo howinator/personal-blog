@@ -2,24 +2,24 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>howinator howinatin</title>
-    <link>http://localhost:1313/</link>
+    <link>https://howinator.io/</link>
     <description>Recent content on howinator howinatin</description>
     <generator>Hugo</generator>
     <language>en-us</language>
     <lastBuildDate>Sat, 07 Feb 2026 11:05:02 -0800</lastBuildDate>
-    <atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://howinator.io/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Mirace of Building</title>
-      <link>http://localhost:1313/blog/mirace-of-building/</link>
+      <link>https://howinator.io/2026/02/07/mirace-of-building/</link>
       <pubDate>Sat, 07 Feb 2026 11:05:02 -0800</pubDate>
-      <guid>http://localhost:1313/blog/mirace-of-building/</guid>
+      <guid>https://howinator.io/2026/02/07/mirace-of-building/</guid>
       <description>&lt;p&gt;Do you remember the first time you fell in love with computers? That moment is one of my fondest memories. I was 13 and had just gotten back from watching Star Wars Episode III for the second time with my best friend, Andy. Andy and I were sitting at my parent’s Compaq doing what we had taken a great fondness to doing recently — editing wiki pages on Wookiepedia to replace instances of “C3PO” to “C3P****O” (I’ll let you fill in the blanks). Like the 7 times before, we saw the familiar page informing us we had been banned, except this time it was permanent.&lt;/p&gt;</description>
     </item>
     <item>
       <title>An Intro</title>
-      <link>http://localhost:1313/blog/first/</link>
+      <link>https://howinator.io/2019/01/22/first/</link>
       <pubDate>Tue, 22 Jan 2019 19:20:33 -0600</pubDate>
-      <guid>http://localhost:1313/blog/first/</guid>
+      <guid>https://howinator.io/2019/01/22/first/</guid>
       <description>&lt;p&gt;I finally got around to making my blog and hosting it on my infra woooo.&lt;/p&gt;&#xA;&lt;p&gt;What you can expect from this blarg:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Technology&lt;/li&gt;&#xA;&lt;li&gt;Personal Projects&lt;/li&gt;&#xA;&lt;li&gt;Politics&lt;/li&gt;&#xA;&lt;li&gt;Climate Change&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;If you don&amp;rsquo;t want to here about any of these topics, feel free to stick to the category or categories which interest you most.&lt;/p&gt;</description>
     </item>
   </channel>

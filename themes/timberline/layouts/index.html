@@ -1,0 +1,17 @@
+{{ define "main" }}
+<div class="home">
+  <div class="home-avatar">
+    {{ with .Site.Params.avatar }}
+    <img src="/img/{{ . }}" alt="{{ $.Site.Params.author }}">
+    {{ end }}
+  </div>
+  <h1 class="home-name">{{ .Site.Params.author }}</h1>
+  {{ with .Site.Params.tagline }}
+  <p class="home-tagline">{{ . }}</p>
+  {{ end }}
+  {{ with .Site.Params.description }}
+  <p class="home-description">{{ . }}</p>
+  {{ end }}
+  {{ partial "social.html" . }}
+</div>
+{{ end }}

@@ -1,0 +1,17 @@
+<div class="social-links">
+  {{ with .Site.Params.social.Github }}
+  <a href="https://github.com/{{ . }}" target="_blank" rel="noopener" aria-label="GitHub">
+    {{ partial "icons/github.html" }}
+  </a>
+  {{ end }}
+  {{ with .Site.Params.social.Twitter }}
+  <a href="https://twitter.com/{{ . }}" target="_blank" rel="noopener" aria-label="Twitter">
+    {{ partial "icons/twitter.html" }}
+  </a>
+  {{ end }}
+  {{ with .Site.Params.social.Email }}
+  <a href="mailto:{{ . }}" aria-label="Email">
+    {{ partial "icons/email.html" }}
+  </a>
+  {{ end }}
+</div>
