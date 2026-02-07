@@ -232,65 +232,23 @@ img {
   color: var(--accent);
 }
 
-/* --- Tree SVG & Band-Based Rustle Animation --- */
+/* --- Tree SVG & Wind Rustle --- */
 .tree-svg {
   display: block;
   width: 100%;
   height: 100%;
-  overflow: visible;
+  filter: brightness(1);  /* pre-establish compositing layer to prevent layout shift on hover */
 }
 
-/* Each band shows the full tree but clipped to a horizontal slice.
-   On hover, each slice animates independently → branch-rustle illusion. */
-.band-base  { clip-path: inset(76% 0 0 0); }
-.band-lower { clip-path: inset(56% 0 20% 0); }
-.band-mid   { clip-path: inset(36% 0 40% 0); }
-.band-upper { clip-path: inset(18% 0 58% 0); }
-.band-top   { clip-path: inset(0 0 78% 0); }
-
-.band {
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
+.archive-card:hover .tree-svg {
+  animation: rustle 3s step-end infinite;
 }
 
-.archive-card:hover .band-top {
-  animation: rustle-top 2.2s ease-in-out infinite;
-}
-.archive-card:hover .band-upper {
-  animation: rustle-upper 2.6s ease-in-out infinite 0.15s;
-}
-.archive-card:hover .band-mid {
-  animation: rustle-mid 3s ease-in-out infinite 0.3s;
-}
-.archive-card:hover .band-lower {
-  animation: rustle-lower 3.4s ease-in-out infinite 0.1s;
-}
-/* band-base: no animation (trunk stays still) */
-
-@keyframes rustle-top {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  20%      { transform: translate(3px, -1px) rotate(2deg); }
-  45%      { transform: translate(-2px, 0.5px) rotate(-1.5deg); }
-  70%      { transform: translate(1.5px, -0.5px) rotate(1deg); }
-}
-
-@keyframes rustle-upper {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  25%      { transform: translate(2px, -0.5px) rotate(1.2deg); }
-  50%      { transform: translate(-1.5px, 0.3px) rotate(-0.8deg); }
-  75%      { transform: translate(1px, -0.2px) rotate(0.5deg); }
-}
-
-@keyframes rustle-mid {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  30%      { transform: translate(1.2px, 0) rotate(0.6deg); }
-  60%      { transform: translate(-0.8px, 0.2px) rotate(-0.4deg); }
-}
-
-@keyframes rustle-lower {
-  0%, 100% { transform: translate(0, 0); }
-  35%      { transform: translate(0.5px, 0); }
-  65%      { transform: translate(-0.4px, 0); }
+@keyframes rustle {
+  0%   { filter: url(#w1); }
+  25%  { filter: url(#w3); }
+  50%  { filter: url(#w5); }
+  75%  { filter: url(#w7); }
 }
 
 .card-body {
@@ -308,6 +266,7 @@ img {
 
 .archive-link {
   font-size: 1.05rem;
+  border-bottom: 1px solid transparent;
 }
 
 /* --- Blog Post --- */
