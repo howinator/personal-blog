@@ -1,11 +1,11 @@
-REGISTRY ?= <tailscale-ip>:5000
+REGISTRY ?= zot.ui.sparky.best
 IMAGE := $(REGISTRY)/personal-blog
 TAG ?= latest
 
 .PHONY: build push login
 
 build:
-	docker build -t $(IMAGE):$(TAG) .
+	docker build --platform linux/amd64 -t $(IMAGE):$(TAG) .
 
 push: build
 	docker push $(IMAGE):$(TAG)
