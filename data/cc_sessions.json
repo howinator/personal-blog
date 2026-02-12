@@ -2,19 +2,19 @@
   "sessions": [
     {
       "session_id": "c00494da-631d-4021-b646-7753d12f4ff5",
-      "date": "2026-02-12T16:54:04.427Z",
+      "date": "2026-02-12T17:15:22.907Z",
       "date_display": "Feb 12, 2026",
-      "summary": "Building an auto-updating blog that tracks Claude Code session stats (prompts, tool calls, tokens, active time) with accordion UI, triggered by ses...",
+      "summary": "Built an auto-updating blog post system that captures Claude Code session stats via hooks, Python processing, and Hugo shortcodes.",
       "project": "personal-blog",
       "cwd": "/Users/howie/projects/personal-blog",
-      "num_user_prompts": 1,
-      "num_tool_calls": 16,
-      "total_input_tokens": 1373355,
-      "total_output_tokens": 10086,
-      "total_tokens": 1383441,
-      "total_tokens_display": "1.4M",
-      "active_time_seconds": 1194,
-      "active_time_display": "19m 54s",
+      "num_user_prompts": 6,
+      "num_tool_calls": 103,
+      "total_input_tokens": 10851105,
+      "total_output_tokens": 10309,
+      "total_tokens": 10861414,
+      "total_tokens_display": "10.9M",
+      "active_time_seconds": 1408,
+      "active_time_display": "23m 28s",
       "cc_version": "2.1.37"
     },
     {
@@ -241,10 +241,10 @@
   ],
   "totals": {
     "session_count": 14,
-    "total_tokens": 42990977,
-    "total_tokens_display": "43.0M",
-    "total_tool_calls": 455,
-    "total_active_time_seconds": 18392,
-    "total_active_time_display": "5h 6m"
+    "total_tokens": 52468950,
+    "total_tokens_display": "52.5M",
+    "total_tool_calls": 542,
+    "total_active_time_seconds": 18606,
+    "total_active_time_display": "5h 10m"
   }
 }

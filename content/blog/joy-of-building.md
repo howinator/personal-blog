@@ -57,8 +57,6 @@ I have no idea what happens next week, next month, next year.
 What I do know is that along the way, we'll participate in the joy of building if we let it. 
 And that's exactly what that 13 year old boy signed up for.
 
-This time feels different. The uncertainty about what will happen next week is unlike anything we've experienced. I do know that along the way, we’ll participate in the joy of building if we let it. And that’s exactly what that 13 year old boy signed up for. 
-
 So please, go right ahead and download PuTTY, reset your IP address, run those parallel agents, merge LLM-generated PRs, revert that one LLM-generated PR, be scared, get excited, screw up, learn, but please, above all else, build the future with me — it's why we fell in love with computing.
 
 [^1]: https://en.wikipedia.org/wiki/Hank_the_Tank
