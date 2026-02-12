@@ -50,7 +50,7 @@ I understand the stakes are higher for someone whose livelihood is on the line t
 
 Did I mention I didn't have an allowance? If my Mom is reading this, I haven’t forgotten. I’ll never forget. But also, would I have been so rebellious if I had one? Maybe not. I wouldn’t want to risk losing my ticket to Halo 2. That’s why being at a startup feels so unfairly enviable right now. I can rip up the playbook, try new ways of building software, be wrong and then learn the best way to build a technology company in an AI world without putting the non-existent allowance at risk. Being in an environment where you have permission to truly play with and break the new thing is no different than my parents letting me go wild with the new computer and high speed DSL internet. I was grateful then and I’m grateful now… okay, Mom, I forgive you. 
 
-This time feels different. I do know that along the way, we’ll participate in the joy of building if we let it. And that’s exactly what that 13 year old boy signed up for. 
+This time feels different. The uncertainty about what will happen next week is unlike anything we've experienced. I do know that along the way, we’ll participate in the joy of building if we let it. And that’s exactly what that 13 year old boy signed up for. 
 
 So please, go right ahead and download PuTTY, reset your IP address, run those parallel agents, merge LLM-generated PRs, revert that one LLM-generated PR, be scared, get excited, screw up, learn, but please, above all else, build the future with me — it's why we fell in love with computing.
 
