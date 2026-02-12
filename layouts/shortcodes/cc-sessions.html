@@ -1,0 +1,54 @@
+{{ $data := $.Site.Data.cc_sessions }}
+{{ $sessions := $data.sessions }}
+{{ $totals := $data.totals }}
+
+{{ if and $sessions (gt (len $sessions) 0) }}
+<div class="cc-stats-summary">
+  <div class="cc-stat-box">
+    <div class="cc-stat-value">{{ $totals.session_count }}</div>
+    <div class="cc-stat-label">Sessions</div>
+  </div>
+  <div class="cc-stat-box">
+    <div class="cc-stat-value">{{ $totals.total_tokens_display }}</div>
+    <div class="cc-stat-label">Total Tokens</div>
+  </div>
+  <div class="cc-stat-box">
+    <div class="cc-stat-value">{{ $totals.total_active_time_display }}</div>
+    <div class="cc-stat-label">Active Time</div>
+  </div>
+  <div class="cc-stat-box">
+    <div class="cc-stat-value">{{ $totals.total_tool_calls }}</div>
+    <div class="cc-stat-label">Tool Calls</div>
+  </div>
+</div>
+
+<div class="cc-session-list">
+  {{ range $sessions }}
+  <details class="cc-session">
+    <summary>
+      <span class="cc-session-caret">&#9654;</span>
+      <span class="cc-session-date">{{ .date_display }}</span>
+      <span class="cc-session-summary">{{ .summary }}</span>
+      <span class="cc-session-tokens">{{ .total_tokens_display }} tokens</span>
+    </summary>
+    <div class="cc-session-details">
+      <table>
+        <tr><td>Project</td><td>{{ .project }}</td></tr>
+        <tr><td>User Prompts</td><td>{{ .num_user_prompts }}</td></tr>
+        <tr><td>Tool Calls</td><td>{{ .num_tool_calls }}</td></tr>
+        <tr><td>Input Tokens</td><td>{{ .total_input_tokens }}</td></tr>
+        <tr><td>Output Tokens</td><td>{{ .total_output_tokens }}</td></tr>
+        <tr><td>Total Tokens</td><td>{{ .total_tokens_display }}</td></tr>
+        <tr><td>Active Time</td><td>{{ .active_time_display }}</td></tr>
+        <tr><td>CC Version</td><td>{{ .cc_version }}</td></tr>
+      </table>
+    </div>
+  </details>
+  {{ end }}
+</div>
+
+{{ else }}
+<div class="cc-empty">
+  <p>No sessions recorded yet. Stats will appear here automatically after Claude Code sessions.</p>
+</div>
+{{ end }}

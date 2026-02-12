@@ -1,0 +1,11 @@
+{
+  "sessions": [],
+  "totals": {
+    "session_count": 0,
+    "total_tokens": 0,
+    "total_tokens_display": "0",
+    "total_tool_calls": 0,
+    "total_active_time_seconds": 0,
+    "total_active_time_display": "0s"
+  }
+}

@@ -1,0 +1,161 @@
+/* ==========================================================================
+   Claude Code Session Stats
+   ========================================================================== */
+
+/* --- Summary Dashboard --- */
+.cc-stats-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.cc-stat-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.cc-stat-value {
+  font-family: var(--font-mono);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.2;
+}
+
+.cc-stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.25rem;
+}
+
+/* --- Session List --- */
+.cc-session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cc-session {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.cc-session summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cc-session summary::-webkit-details-marker {
+  display: none;
+}
+
+.cc-session-caret {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.cc-session[open] .cc-session-caret {
+  transform: rotate(90deg);
+}
+
+.cc-session-date {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cc-session-summary {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.95rem;
+}
+
+.cc-session-tokens {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* --- Session Details --- */
+.cc-session-details {
+  padding: 0 1rem 1rem;
+  border-top: 1px solid var(--border);
+  margin-top: 0;
+}
+
+.cc-session-details table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin-top: 0.75rem;
+}
+
+.cc-session-details td {
+  padding: 0.35rem 0.5rem;
+  border: none;
+}
+
+.cc-session-details td:first-child {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+  width: 40%;
+}
+
+.cc-session-details td:last-child {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+/* --- Empty State --- */
+.cc-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* --- Responsive --- */
+@media (max-width: 600px) {
+  .cc-stats-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .cc-session summary {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .cc-session-summary {
+    order: 3;
+    flex-basis: 100%;
+    white-space: normal;
+  }
+
+  .cc-session-tokens {
+    margin-left: auto;
+  }
+}

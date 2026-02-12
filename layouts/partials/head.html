@@ -9,7 +9,8 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png">
 {{ $main := resources.Get "css/main.css" }}
 {{ $redacted := resources.Get "css/redacted.css" }}
-{{ $css := slice $main $redacted | resources.Concat "css/bundle.css" | minify | fingerprint }}
+{{ $ccstats := resources.Get "css/cc-stats.css" }}
+{{ $css := slice $main $redacted $ccstats | resources.Concat "css/bundle.css" | minify | fingerprint }}
 <link rel="stylesheet" href="{{ $css.RelPermalink }}">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-056VXB4GQS"></script>
