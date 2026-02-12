@@ -1,6 +1,6 @@
 ---
 title: "Joy of Building"
-date: 2026-02-07T11:05:02-08:00
+date: 2026-02-11T11:05:02-08:00
 draft: false
 categories: ['essay']
 tags: ['']
