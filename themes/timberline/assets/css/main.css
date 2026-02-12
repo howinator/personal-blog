@@ -379,8 +379,88 @@ img {
 .post-content h4 {
   margin-top: 2rem;
   margin-bottom: 0.75rem;
-  border-left: 3px solid var(--accent);
-  padding-left: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* --- Heading Tree Decoration --- */
+.heading-tree {
+  flex-shrink: 0;
+  color: var(--accent);
+  display: inline-flex;
+  align-items: flex-end;
+  overflow: visible;
+}
+
+.heading-tree .tree-svg {
+  overflow: visible;
+}
+
+.post-content h2 .heading-tree { width: 24px; height: 20px; }
+.post-content h3 .heading-tree { width: 20px; height: 16px; }
+.post-content h4 .heading-tree { width: 17px; height: 14px; }
+
+.post-content h2 .heading-tree .tree-svg { width: 24px; height: 55px; }
+.post-content h3 .heading-tree .tree-svg { width: 20px; height: 46px; }
+.post-content h4 .heading-tree .tree-svg { width: 17px; height: 39px; }
+
+/* Heading tree hover — exaggerated branch-fold for small trees */
+.post-content h2:hover .seg-br,
+.post-content h3:hover .seg-br,
+.post-content h4:hover .seg-br { animation: h-fold-br 6.5s ease-in-out 1; }
+.post-content h2:hover .seg-mr,
+.post-content h3:hover .seg-mr,
+.post-content h4:hover .seg-mr { animation: h-fold-mr 6.5s ease-in-out 1; }
+.post-content h2:hover .seg-bl,
+.post-content h3:hover .seg-bl,
+.post-content h4:hover .seg-bl { animation: h-fold-bl 6.5s ease-in-out 1; }
+.post-content h2:hover .seg-tr,
+.post-content h3:hover .seg-tr,
+.post-content h4:hover .seg-tr { animation: h-fold-tr 6.5s ease-in-out 1; }
+.post-content h2:hover .seg-ml,
+.post-content h3:hover .seg-ml,
+.post-content h4:hover .seg-ml { animation: h-fold-ml 6.5s ease-in-out 1; }
+.post-content h2:hover .seg-tl,
+.post-content h3:hover .seg-tl,
+.post-content h4:hover .seg-tl { animation: h-fold-tl 6.5s ease-in-out 1; }
+
+/* Heading keyframes — just a touch more than card */
+@keyframes h-fold-br {
+  0%        { transform: translate(0, 0) scaleX(1) rotate(0); }
+  20%       { transform: translate(-3px, -5px) scaleX(0.87) rotate(-1deg); }
+  38%       { transform: translate(0.75px, 1px) scaleX(1.02) rotate(0.15deg); }
+  50%, 100% { transform: translate(0, 0) scaleX(1) rotate(0); }
+}
+@keyframes h-fold-mr {
+  0%, 10%   { transform: translate(0, 0) scaleX(1) rotate(0); }
+  30%       { transform: translate(-3px, -5px) scaleX(0.87) rotate(-1deg); }
+  48%       { transform: translate(0.75px, 1px) scaleX(1.02) rotate(0.15deg); }
+  60%, 100% { transform: translate(0, 0) scaleX(1) rotate(0); }
+}
+@keyframes h-fold-bl {
+  0%, 10%   { transform: translate(0, 0) scaleX(1) rotate(0); }
+  30%       { transform: translate(3px, -5px) scaleX(0.87) rotate(1deg); }
+  48%       { transform: translate(-0.75px, 1px) scaleX(1.02) rotate(-0.15deg); }
+  60%, 100% { transform: translate(0, 0) scaleX(1) rotate(0); }
+}
+@keyframes h-fold-tr {
+  0%, 20%   { transform: translate(0, 0) scaleX(1) rotate(0); }
+  40%       { transform: translate(-3px, -5px) scaleX(0.87) rotate(-1deg); }
+  58%       { transform: translate(0.75px, 1px) scaleX(1.02) rotate(0.15deg); }
+  70%, 100% { transform: translate(0, 0) scaleX(1) rotate(0); }
+}
+@keyframes h-fold-ml {
+  0%, 20%   { transform: translate(0, 0) scaleX(1) rotate(0); }
+  40%       { transform: translate(3px, -5px) scaleX(0.87) rotate(1deg); }
+  58%       { transform: translate(-0.75px, 1px) scaleX(1.02) rotate(-0.15deg); }
+  70%, 100% { transform: translate(0, 0) scaleX(1) rotate(0); }
+}
+@keyframes h-fold-tl {
+  0%, 30%   { transform: translate(0, 0) scaleX(1) rotate(0); }
+  50%       { transform: translate(3px, -5px) scaleX(0.87) rotate(1deg); }
+  68%       { transform: translate(-0.75px, 1px) scaleX(1.02) rotate(-0.15deg); }
+  80%, 100% { transform: translate(0, 0) scaleX(1) rotate(0); }
 }
 
 .post-content h2 {

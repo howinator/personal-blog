@@ -3,7 +3,7 @@ title: "Joy of Building"
 date: 2026-02-11T11:05:02-08:00
 draft: false
 categories: ['personal', 'essay']
-tags: ['']
+tags: ['personal', 'ai', 'leadership']
 slug: "joy-of-building"
 ---
 
@@ -15,11 +15,15 @@ From that point forward, it was war. Our enemies were the moderators of Wookiepe
 
 I would say things escalated. They would write a script to ban any IP that made an edit containing that string, so I would write a script to edit 100 pages at once. They would return 400 for POST requests which contained that phrase, I would spell the phrase out by adding a single letter to the beginning of every section title. It even escalated to the point where they ended up banning the entire CIDR block for AT&T in, at least, Houston, maybe Texas — I could never figure out the exact scope.
 
+## && ifup WAN
+
 Looking back, this was immature (I still contend hilarious though), but something about that online war left me absolutely hooked. The fact that I, a 13 year old kid, could, from my room, have an effect on people all over the world was bonkers to me — legitimately transcendent. With time, I came to learn that this concept is called “leverage.” Computers were leverage and oh boy did I like leverage.
 
 With maturity, that desire for leveraged vandalism was shaped into something more positive. Though jobs come with a lot of bullshit, I try to not lose sight of the fact that having an outsize impact on the world is what motivates me. Moving into management, I fell in love with the idea of helping people grow in their ability to use the magic of computing to apply leverage to the world. Watching someone I care about growing from crippling impostor syndrome to owning a critical product area is more rewarding than e-vandalism ever was, but the point remains — all the margin you’ll give me and call me Bear Stearns, we’re hopping on the leverage train.
 
-Why am I writing this? I’m writing this because we have the absolute and distinct privilege to live in a time where we can apply an immense amount of leverage. Just like an effective EM applies leverage to help their engineers build leveraged product, engineers can now apply leverage to build more than we thought possible with LLM agents. As product orgs, we can solve problems that traditional computing wouldn’t have a chance in hell of even making sense of. As a society, I couldn’t begin to guess where we end up — getting C3P****O on the real Wikipedia? A boy can dream.
+## A Distinct Privilege
+
+Why am I writing this? I'm writing this because we have the absolute and distinct privilege to live in a time where we can apply an immense amount of leverage. Just like an effective EM applies leverage to help their engineers build leveraged product, engineers can now apply leverage to build more than we thought possible with LLM agents. As product orgs, we can solve problems that traditional computing wouldn’t have a chance in hell of even making sense of. As a society, I couldn’t begin to guess where we end up — getting C3P****O on the real Wikipedia? A boy can dream.
 
 I just don’t know what exists between here and there. When I was 13 and experiencing the joy of computing, it absolutely seemed to me like I was going to break the computer, the whole internet, in fact, and do my middle school graduation from a jail cell. 
 
@@ -29,7 +33,9 @@ Broadly in tech right now, I yearn for that same adolescent sense of curiosity a
 
 I understand the stakes are higher for someone whose livelihood is on the line than a 13 year old boy trolling a Star Wars wiki. Is it really so different though? We’re all collectively children when it comes to this technology. And if any of these words have resonated with you so far, I guarantee it’s more exciting to get curious and do whatever you can to leverage this new form of computing than be too scared to download PuTTY and live a life without the joy of this career. 
 
-Did I mention I didn’t have an allowance? If my Mom is reading this, I haven’t forgotten. I’ll never forget. But also, would I have been so rebellious if I had one? Maybe not. I wouldn’t want to risk losing my ticket to Halo 2. That’s why being at a startup feels so unfairly enviable right now. I can rip up the playbook, try new ways of building software, be wrong and then learn the best way to build a technology company in an AI world without putting the non-existent allowance at risk. Being in an environment where you have permission to truly play with and break the new thing is no different than my parents letting me go wild with the new computer and high speed DSL internet. I was grateful then and I’m grateful now… okay, Mom, I forgive you. 
+## About That Allowance
+
+Did I mention I didn't have an allowance? If my Mom is reading this, I haven’t forgotten. I’ll never forget. But also, would I have been so rebellious if I had one? Maybe not. I wouldn’t want to risk losing my ticket to Halo 2. That’s why being at a startup feels so unfairly enviable right now. I can rip up the playbook, try new ways of building software, be wrong and then learn the best way to build a technology company in an AI world without putting the non-existent allowance at risk. Being in an environment where you have permission to truly play with and break the new thing is no different than my parents letting me go wild with the new computer and high speed DSL internet. I was grateful then and I’m grateful now… okay, Mom, I forgive you. 
 
 I want to hold and acknowledge the tension here — we personally have a lot to lose as professionals, but the startups we work for have a lot to gain. This is why, especially now, the incentives need to align between organizations and their employees. No amount of “trust the process” resolves this fundamental tension. We, as leaders, can soothe the throbbing fear of the future by giving the people in our organization a vested interest in building that future.
 

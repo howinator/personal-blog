@@ -1,0 +1,8 @@
+<h{{ .Level }} id="{{ .Anchor }}"{{ range $k, $v := .Attributes }} {{ $k }}="{{ $v }}"{{ end }}>
+  {{- if and (ge .Level 2) (le .Level 4) -}}
+  <span class="heading-tree" aria-hidden="true">
+    {{- partial "tree.html" (dict "index" .Anchor) -}}
+  </span>
+  {{- end -}}
+  {{ .Text }}
+</h{{ .Level }}>
