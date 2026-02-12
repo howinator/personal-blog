@@ -7,12 +7,12 @@ categories: ["personal"]
 ---
 I finally got around to making my blog and hosting it on my infra woooo.
 
-What you can expect from this blarg:
+What you can expect from me:
 
- * Technology
- * Personal Projects
- * Politics
- * Climate Change
+ * My experience with technology
+ * Ideas I find confusing or exciting
+ * How to be a human in an AI world
+ * Dogs?
+ * Touching grass
 
-If you don't want to here about any of these topics, feel free to stick to the category or categories which interest you most.
 

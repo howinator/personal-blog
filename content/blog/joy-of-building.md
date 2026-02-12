@@ -2,7 +2,7 @@
 title: "Joy of Building"
 date: 2026-02-11T11:05:02-08:00
 draft: false
-categories: ['essay']
+categories: ['personal', 'essay']
 tags: ['']
 slug: "joy-of-building"
 ---
