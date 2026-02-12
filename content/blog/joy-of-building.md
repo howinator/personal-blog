@@ -33,8 +33,8 @@ Did I mention I didn’t have an allowance? If my Mom is reading this, I haven�
 
 I want to hold and acknowledge the tension here — we personally have a lot to lose as professionals, but the startups we work for have a lot to gain. This is why, especially now, the incentives need to align between organizations and their employees. No amount of “trust the process” resolves this fundamental tension. We, as leaders, can soothe the throbbing fear of the future by giving the people in our organization a vested interest in building that future.
 
-This time feels different. I don’t know what lies on the other side of this. But I do know that along the way, we’ll participate in the miracle of building if we let it. And that’s exactly what that 13 year old boy signed up for. 
+This time feels different. I don’t know what lies on the other side of this. But I do know that along the way, we’ll participate in the joy of building if we let it. And that’s exactly what that 13 year old boy signed up for. 
 
-So please, go right ahead and download PuTTY, reset your IP address, run those parallel agents, merge LLM-generated PRs, revert that one LLM-generated PR, be scared, get excited, screw up, learn, but good god, above all else, build the future with me — it’s why we fell in love with computing.
+So please, go right ahead and download PuTTY, reset your IP address, run those parallel agents, merge LLM-generated PRs, revert that one LLM-generated PR, be scared, get excited, screw up, learn, but please, above all else, build the future with me — it’s why we fell in love with computing.
 
 
