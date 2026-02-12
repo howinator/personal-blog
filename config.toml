@@ -20,6 +20,9 @@ enableEmoji = true
     Email = "blog@howinator.io"
 
 [markup]
+  [markup.goldmark]
+    [markup.goldmark.extensions]
+      footnote = true
   [markup.highlight]
     noClasses = false
     guessSyntax = true
