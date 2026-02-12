@@ -27,7 +27,7 @@ Why am I writing this? I'm writing this because we have the absolute and distinc
 
 I just don’t know what exists between here and there. When I was 13 and experiencing the joy of computing, it absolutely seemed to me like I was going to break the computer, the whole internet, in fact, and do my middle school graduation from a jail cell. 
 
-Sure I broke a few eggs and had to explain to my Mom why the internet wasn’t working. But did the worst case happen? Of course not. It’s absurd in retrospect. And I’ve been rewarded with an incredible career of making the world a better place by building computer programs and teams. 
+Sure I broke a few eggs and had to explain to my Mom why the internet wasn’t working. But did the worst case happen? Of course not. It’s absurd in retrospect. And I’ve been rewarded with an incredible career of making the world a better place by building teams and computer programs. 
 
 Broadly in tech right now, I yearn for that same adolescent sense of curiosity about how we work, the processes we use to collaborate and the products that we build. Instead, it’s been a steady drip of one part cynicism and two parts tribalism. 
 
