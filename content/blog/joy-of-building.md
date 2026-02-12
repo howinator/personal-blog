@@ -1,10 +1,10 @@
 ---
-title: "Mirace of Building"
+title: "Joy of Building"
 date: 2026-02-07T11:05:02-08:00
 draft: false
-categories: ['']
+categories: ['essay']
 tags: ['']
-slug: "mirace-of-building"
+slug: "joy-of-building"
 ---
 
 Do you remember the first time you fell in love with computers? That moment is one of my fondest memories. I was 13 and had just gotten back from watching Star Wars Episode III for the second time with my best friend, Andy. Andy and I were sitting at my parent’s Compaq doing what we had taken a great fondness to doing recently — editing wiki pages on Wookiepedia to replace instances of “C3PO” to “C3P****O” (I’ll let you fill in the blanks). Like the 7 times before, we saw the familiar page informing us we had been banned, except this time it was permanent. 
