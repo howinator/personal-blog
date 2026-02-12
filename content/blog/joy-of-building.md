@@ -9,7 +9,7 @@ slug: "joy-of-building"
 
 Do you remember the first time you fell in love with computers? That moment is one of my fondest memories. I was 13 and had just gotten back from watching Star Wars Episode III for the second time with my best friend, Andy. Andy and I were sitting at my parent’s Compaq doing what we had taken a great fondness to doing recently — editing wiki pages on Wookiepedia to replace instances of “C3PO” to “C3P****O” (I’ll let you fill in the blanks). Like the 7 times before, we saw the familiar page informing us we had been banned, except this time it was permanent. 
 
-Andy was distraught, but I had been preparing for this day. I told him I had used a thing called Google to figure out a way around the ban. With some latent fear that I was about to ruin my Dad’s fancy new computer, I downloaded a thing called “PuTTY,” connected to something called a “router” using some strange number with too many decimals and typed “ifdown WAN && sleep 10 && ifup WAN” then hit enter. Those 10 seconds were excruciating — I was convinced, while we furiously refreshed the page, that I had destroyed the computer, taken down the entirety of the internet and the FBI was about to raid my house. But then, after some time, surely closer to an eternity than 10 seconds, the page loaded and wouldn’t you know it? We were back in action.
+Andy was distraught, but I had been preparing for this day. I told him I had used a thing called Google to figure out a way around the ban. With some latent fear that I was about to ruin my Dad’s fancy new computer, I downloaded a thing called “PuTTY,” connected to something called a “router” using some strange number with too many decimals and typed `ifdown WAN && sleep 10 && ifup WAN` then hit enter. Those 10 seconds were excruciating — I was convinced, while we furiously refreshed the page, that I had destroyed the computer, taken down the entirety of the internet and the FBI was about to raid my house. But then, after some time, surely closer to an eternity than 10 seconds, the page loaded and wouldn’t you know it? We were back in action.
 
 From that point forward, it was war. Our enemies were the moderators of Wookiepedia (I’m so sorry SparqMan) and they were facing off against two 13 year olds who would stop at nothing to plaster “C3P****O” all over their website. 
 
@@ -36,7 +36,7 @@ Without AI, I'd have to learn the minutiae of flight controllers, AI vision and 
 
 With AI? That suddenly seems worth it — no one wants our bear from gaining an unfortunate nickname[^1]. And what does it take from me? Some naive curiosity and willingness to build.
 
-If you're an engineer worried about building, this can only be exciting. Imagine the products a team of extremely leveraged builders working in a product org. An entire society operating in this way? I can only imagine where we end up — getting C3P****O on the real Wikipedia? A boy can dream.
+If you're an engineer worried about building, this can only be exciting. Imagine what a team of extremely leveraged builders could create. An entire society operating in this way? I can only imagine where we end up — getting C3P****O on the real Wikipedia? A boy can dream.
 
 ## Furiously Refreshing
 
