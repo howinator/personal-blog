@@ -2,9 +2,9 @@
 
 import json
 import os
-import subprocess
 import sys
 import tempfile
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -99,6 +99,10 @@ def compute_stats(entries: list[dict]) -> dict | None:
     if user_prompts == 0:
         return None
 
+    total_tokens = input_tokens + output_tokens
+    if total_tokens == 0:
+        return None
+
     # Compute active time
     active_seconds = 0
     parsed_times = []
@@ -164,12 +168,19 @@ def compute_stats(entries: list[dict]) -> dict | None:
 
 
 def generate_summary(user_texts: list[str]) -> str:
-    """Generate a 1-sentence summary using claude CLI."""
+    """Generate a 1-sentence summary via the Anthropic API."""
     if not user_texts:
         return "Empty session"
 
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        return _fallback_summary(user_texts)
+
     # Build context from user prompts (truncate to keep prompt reasonable)
-    context = "\n---\n".join(user_texts[:20])
+    cleaned = _clean_user_texts(user_texts)
+    if not cleaned:
+        return "Short session"
+    context = "\n---\n".join(cleaned[:20])
     if len(context) > 4000:
         context = context[:4000] + "..."
 
@@ -181,24 +192,48 @@ def generate_summary(user_texts: list[str]) -> str:
         f"{context}"
     )
 
+    body = json.dumps({
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 100,
+        "messages": [{"role": "user", "content": prompt}],
+    }).encode()
+
+    req = urllib.request.Request(
+        "https://api.anthropic.com/v1/messages",
+        data=body,
+        headers={
+            "x-api-key": api_key,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        },
+    )
+
     try:
-        result = subprocess.run(
-            ["claude", "-p", "--model", "haiku", prompt],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            summary = result.stdout.strip()
-            # Ensure it's not too long
-            if len(summary) > 150:
-                summary = summary[:147] + "..."
-            return summary
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.load(resp)
+            text = data.get("content", [{}])[0].get("text", "").strip()
+            if text:
+                if len(text) > 150:
+                    text = text[:147] + "..."
+                return text
+    except Exception:
         pass
 
-    # Fallback: first user prompt, truncated
-    fallback = user_texts[0]
+    return _fallback_summary(user_texts)
+
+
+def _clean_user_texts(user_texts: list[str]) -> list[str]:
+    """Filter out system-injected text from user prompts."""
+    skip_prefixes = ("[Request interrupted", "<local-command-caveat>", "<system-reminder>")
+    return [t for t in user_texts if not any(t.startswith(p) for p in skip_prefixes)]
+
+
+def _fallback_summary(user_texts: list[str]) -> str:
+    """Fallback: first real user prompt, truncated."""
+    cleaned = _clean_user_texts(user_texts)
+    if not cleaned:
+        return "Short session"
+    fallback = cleaned[0]
     if len(fallback) > 120:
         fallback = fallback[:117] + "..."
     return fallback

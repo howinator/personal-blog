@@ -1,2 +1,5 @@
 .DS_Store
 public/
+scripts/cc-stats/.venv/
+__pycache__/
+*.pyc
