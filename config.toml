@@ -8,7 +8,7 @@ enableEmoji = true
 [params]
     author = "Howie Benefiel"
     description = "Howie's thoughts on things"
-    avatar = "headshot.jpg"
+    avatar = "headshot-v2.jpg"
     tagline = "Builder. People & Product."
 
 [permalinks]
