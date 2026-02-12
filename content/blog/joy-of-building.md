@@ -7,13 +7,13 @@ tags: ['personal', 'ai', 'leadership']
 slug: "joy-of-building"
 ---
 
-Do you remember the first time you fell in love with computers? That moment is one of my fondest memories. I was 13 and had just gotten back from watching Star Wars Episode III for the second time with my best friend, Andy. Andy and I were sitting at my parent’s Compaq doing what we had taken a great fondness to doing recently — editing wiki pages on Wookiepedia to replace instances of “C3PO” to “C3P{{< redacted text="****" tip="I'll give you a hint, it's phallic." >}}O" (I'll let you fill in the blanks). Like the 7 times before, we saw the familiar page informing us we had been banned, except this time it was permanent. 
+Do you remember the first time you fell in love with computers? That moment is one of my fondest memories. I was 13 and had just gotten back from watching Star Wars Episode III for the second time with my best friend, Andy. Andy and I were sitting at my parents' Compaq doing what we had taken a great fondness to doing recently — editing wiki pages on Wookiepedia to replace instances of “C3PO” with “C3P{{< redacted text="****" tip="I'll give you a hint, it's phallic." >}}O" (I'll let you fill in the blanks). Like the 7 times before, we saw the familiar page informing us we had been banned, except this time it was permanent. 
 
 Andy was distraught, but I had been preparing for this day. I told him I had used a thing called Google to figure out a way around the ban. With some latent fear that I was about to ruin my Dad’s fancy new computer, I downloaded a thing called “PuTTY,” connected to something called a “router” using some strange number with too many decimals and typed `ifdown WAN && sleep 10 && ifup WAN` then hit enter. Those 10 seconds were excruciating — I was convinced, while we furiously refreshed the page, that I had destroyed the computer, taken down the entirety of the internet and the FBI was about to raid my house. But then, after some time, surely closer to an eternity than 10 seconds, the page loaded and wouldn’t you know it? We were back in action.
 
 From that point forward, it was war. Our enemies were the moderators of Wookiepedia (I’m so sorry SparqMan) and they were facing off against two 13 year olds who would stop at nothing to plaster "C3P{{< redacted text="****" tip="Why did you hover again? Of course it was C3PenisO.<br>This should be obvious." >}}O" all over their website. 
 
-I would say things escalated. They would write a script to ban any IP that made an edit containing that string, so I would write a script to edit 100 pages at once. They would return 400 for POST requests which contained that phrase, I would spell the phrase out by adding a single letter to the beginning of every section title. It even escalated to the point where they ended up banning the entire CIDR block for AT&T in, at least, Houston, maybe Texas — I could never figure out the exact scope.
+I would say things escalated. They would write a script to ban any IP that made an edit containing that string, so I would write a script to edit 100 pages at once. They would return 400 for POST requests which contained that phrase, so I would spell the phrase out by adding a single letter to the beginning of every section title. It even escalated to the point where they ended up banning the entire CIDR block for AT&T in, at least, Houston, maybe Texas — I could never figure out the exact scope.
 
 ## && ifup WAN
 
@@ -44,7 +44,7 @@ I've found excitement often comes with a healthy pairing of fear. And there's pl
 
 Sure I broke a few eggs and had to explain to my Mom why the internet wasn’t working. But did the worst case happen? Of course not. It’s absurd in retrospect. And I’ve been rewarded with an incredible career of making the world a better place by building teams and computer programs. 
 
-Broadly in tech right now, I yearn for that same adolescent sense of curiosity about how we work, the processes we use to collaborate and the products that we build. Instead, it’s been a steady drip of one part cynicism and two parts tribalism. 
+Broadly in tech right now, I yearn for that same adolescent sense of curiosity about how we do work, the processes we use to collaborate and the products that we build. Instead, it’s been a steady drip of one part cynicism and two parts tribalism. 
 
 I understand the stakes are higher for someone whose livelihood is on the line than a 13 year old boy trolling a Star Wars wiki. Is it really so different though? We’re all collectively children when it comes to this technology. And if any of these words have resonated with you so far, I guarantee it’s more exciting to get curious and do whatever you can to leverage this new form of computing than be too scared to download PuTTY and live a life without the joy of this career. 
 
