@@ -1,0 +1,3 @@
+{{- /* Redacted text with hover/tap tooltip */ -}}
+<span class="redacted-container" onclick="this.classList.toggle('active')"><span class="redacted-block">{{ .Get "text" | default "****" }}</span><span class="redacted-tip">{{ .Get "tip" | safeHTML }}</span></span>
+{{- /* trailing whitespace trimmed */ -}}
