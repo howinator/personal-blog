@@ -1,6 +1,74 @@
 {
   "sessions": [
     {
+      "session_id": "bedec95f-192a-4b38-9ae7-c376a6f95915",
+      "date": "2026-02-13T06:02:23.761Z",
+      "date_display": "Feb 13, 2026",
+      "summary": "User explored Claude's capabilities and expressed interest in getting coding assistance.",
+      "project": "personal-blog",
+      "cwd": "/Users/howie/projects/personal-blog",
+      "num_user_prompts": 3,
+      "num_tool_calls": 0,
+      "total_input_tokens": 101876,
+      "total_output_tokens": 32,
+      "total_tokens": 101908,
+      "total_tokens_display": "101.9k",
+      "active_time_seconds": 73,
+      "active_time_display": "1m 13s",
+      "cc_version": "2.1.37"
+    },
+    {
+      "session_id": "3e3a3b3a-e54a-4d99-af0c-a45995de6eb6",
+      "date": "2026-02-13T06:01:57.248Z",
+      "date_display": "Feb 13, 2026",
+      "summary": "I don't have enough information from these prompts to provide a meaningful summary of coding work performed.",
+      "project": "personal-blog",
+      "cwd": "/Users/howie/projects/personal-blog",
+      "num_user_prompts": 2,
+      "num_tool_calls": 0,
+      "total_input_tokens": 84693,
+      "total_output_tokens": 31,
+      "total_tokens": 84724,
+      "total_tokens_display": "84.7k",
+      "active_time_seconds": 9,
+      "active_time_display": "9s",
+      "cc_version": "2.1.37"
+    },
+    {
+      "session_id": "a6fe427f-058d-4aba-8add-cc1411341808",
+      "date": "2026-02-13T05:34:46.787Z",
+      "date_display": "Feb 13, 2026",
+      "summary": "Implemented live streaming session metrics with incremental transcript parsing, rich heartbeat data, and WebSocket relay to display per-session tok...",
+      "project": "personal-blog",
+      "cwd": "/Users/howie/projects/personal-blog",
+      "num_user_prompts": 11,
+      "num_tool_calls": 104,
+      "total_input_tokens": 14913491,
+      "total_output_tokens": 31993,
+      "total_tokens": 14945484,
+      "total_tokens_display": "14.9M",
+      "active_time_seconds": 2850,
+      "active_time_display": "47m 30s",
+      "cc_version": "2.1.37"
+    },
+    {
+      "session_id": "d5890d57-d04c-4fc1-bf39-92f31b70e67b",
+      "date": "2026-02-13T04:50:10.337Z",
+      "date_display": "Feb 13, 2026",
+      "summary": "Built a Go daemon replacing bash scripts to track multiple concurrent Claude Code sessions and only show \"active\" status when at least one session ...",
+      "project": "personal-blog",
+      "cwd": "/Users/howie/projects/personal-blog",
+      "num_user_prompts": 6,
+      "num_tool_calls": 103,
+      "total_input_tokens": 8901832,
+      "total_output_tokens": 18636,
+      "total_tokens": 8920468,
+      "total_tokens_display": "8.9M",
+      "active_time_seconds": 2300,
+      "active_time_display": "38m 20s",
+      "cc_version": "2.1.37"
+    },
+    {
       "session_id": "ae1dbecd-93bf-4019-984a-a875e4b01485",
       "date": "2026-02-13T01:36:38.749Z",
       "date_display": "Feb 13, 2026",
@@ -100,6 +168,23 @@
       "total_tokens_display": "4.4M",
       "active_time_seconds": 2790,
       "active_time_display": "46m 30s",
+      "cc_version": "2.1.37"
+    },
+    {
+      "session_id": "c9308ac9-e1b6-47ca-8b58-1e47ad6c0417",
+      "date": "2026-02-12T04:04:21.767Z",
+      "date_display": "Feb 12, 2026",
+      "summary": "Updated VLAN firewall documentation based on UniFi zone-based firewall configuration and queried about tunneld asset caching and bot protection fea...",
+      "project": "homeserver",
+      "cwd": "/Users/howie/projects/homeserver",
+      "num_user_prompts": 5,
+      "num_tool_calls": 15,
+      "total_input_tokens": 732688,
+      "total_output_tokens": 1603,
+      "total_tokens": 734291,
+      "total_tokens_display": "734.3k",
+      "active_time_seconds": 872,
+      "active_time_display": "14m 32s",
       "cc_version": "2.1.37"
     },
     {
@@ -291,11 +376,11 @@
     }
   ],
   "totals": {
-    "session_count": 17,
-    "total_tokens": 67236830,
-    "total_tokens_display": "67.2M",
-    "total_tool_calls": 703,
-    "total_active_time_seconds": 25645,
-    "total_active_time_display": "7h 7m"
+    "session_count": 22,
+    "total_tokens": 92023705,
+    "total_tokens_display": "92.0M",
+    "total_tool_calls": 925,
+    "total_active_time_seconds": 31749,
+    "total_active_time_display": "8h 49m"
   }
 }

@@ -6,7 +6,7 @@ HOMESERVER_DIR ?= ../homeserver
 
 .PHONY: build push login deploy \
         build-cc-live push-cc-live deploy-cc-live \
-        build-daemon \
+        build-daemon restart-daemon reset-daemon \
         build-all push-all deploy-all \
         dev dev-down dev-heartbeat
 
@@ -43,6 +43,16 @@ deploy-cc-live: push-cc-live
 build-daemon:
 	mkdir -p $(HOME)/.cc-live
 	cd scripts/cc-live && go build -o $(HOME)/.cc-live/cc-live-daemon .
+
+restart-daemon: build-daemon
+	-kill $$(cat $(HOME)/.cc-live/daemon.pid 2>/dev/null) 2>/dev/null
+	-rm -f $(HOME)/.cc-live/daemon.pid
+
+reset-daemon: build-daemon
+	-kill $$(cat $(HOME)/.cc-live/daemon.pid 2>/dev/null) 2>/dev/null
+	-rm -f $(HOME)/.cc-live/daemon.pid
+	rm -f $(HOME)/.cc-live/state.db
+	-mv $(HOME)/.cc-live/daemon.log $(HOME)/.cc-live/daemon.log.$$(date +%Y%m%d-%H%M%S)
 
 # --- All ---
 

@@ -14,23 +14,34 @@ import (
 	"golang.org/x/net/websocket"
 )
 
+type sessionData struct {
+	SessionID   string `json:"session_id"`
+	TotalTokens int64  `json:"total_tokens"`
+	ToolCalls   int    `json:"tool_calls"`
+	UserPrompts int    `json:"user_prompts"`
+	ActiveTime  int    `json:"active_time_seconds"`
+	LastPrompt  string `json:"last_prompt"`
+	Project     string `json:"project"`
+	Model       string `json:"model"`
+}
+
 type state struct {
 	mu            sync.RWMutex
 	active        bool
-	sessions      int
+	sessions      []sessionData
 	lastHeartbeat time.Time
 	clients       map[*websocket.Conn]struct{}
 }
 
 // message is the WebSocket payload sent to browser clients.
 type message struct {
-	Active   bool `json:"active"`
-	Sessions int  `json:"sessions"`
+	Active   bool          `json:"active"`
+	Sessions []sessionData `json:"sessions"`
 }
 
 // heartbeatPayload is the JSON body accepted on POST /api/live/heartbeat.
 type heartbeatPayload struct {
-	Sessions int `json:"sessions"`
+	Sessions []sessionData `json:"sessions"`
 }
 
 var s = &state{
@@ -53,7 +64,6 @@ func main() {
 			return
 		}
 
-		// Parse optional JSON body for session count
 		var payload heartbeatPayload
 		if r.Body != nil {
 			body, _ := io.ReadAll(r.Body)
@@ -61,21 +71,14 @@ func main() {
 				json.Unmarshal(body, &payload)
 			}
 		}
-		if payload.Sessions < 1 {
-			payload.Sessions = 1
-		}
 
 		s.mu.Lock()
 		s.lastHeartbeat = time.Now()
-		wasActive := s.active
-		prevSessions := s.sessions
 		s.active = true
 		s.sessions = payload.Sessions
 		s.mu.Unlock()
 
-		if !wasActive || prevSessions != payload.Sessions {
-			broadcast()
-		}
+		broadcast()
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -91,7 +94,7 @@ func main() {
 		s.mu.Lock()
 		wasActive := s.active
 		s.active = false
-		s.sessions = 0
+		s.sessions = nil
 		s.mu.Unlock()
 		if wasActive {
 			broadcast()
@@ -109,7 +112,7 @@ func main() {
 			s.mu.Lock()
 			if s.active && time.Since(s.lastHeartbeat) > 60*time.Second {
 				s.active = false
-				s.sessions = 0
+				s.sessions = nil
 				s.mu.Unlock()
 				broadcast()
 			} else {

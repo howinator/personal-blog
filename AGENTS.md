@@ -86,9 +86,16 @@ Go WebSocket sidecar that shows a live status dot in the nav when a Claude Code 
 - `layouts/shortcodes/cc-status-dot.html` — Inline status dot shortcode
 
 **Claude Code hooks** (`~/.claude/settings.json`):
-- `SessionStart` → `scripts/cc-live/start.sh` (starts heartbeat daemon)
-- `SessionEnd` → `scripts/cc-live/stop.sh` (kills daemon, signals stop)
+- `SessionStart` → `cc-live-daemon register` (registers session, starts daemon)
+- `SessionEnd` → `cc-live-daemon unregister` (removes session, stops daemon if none left)
 - `SessionEnd` → `scripts/cc-stats/` (processes session stats)
+
+**Daemon Makefile targets:**
+- `make build-daemon` — compile daemon binary to `~/.cc-live/`
+- `make restart-daemon` — build + kill old daemon (auto-restarts on next hook)
+- `make reset-daemon` — build + kill + wipe SQLite DB + rotate logs
+
+**Debugging:** See `services/cc-live/debugging.md` for known issues (SQLITE_BUSY on hooks, zombie sessions, scientific notation, typewriter replay).
 
 ## Claude Code Session Stats
 

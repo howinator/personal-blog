@@ -25,16 +25,16 @@ A Go binary (`~/.cc-live/cc-live-daemon`) manages multiple concurrent Claude Cod
 **Subcommands:**
 - `register` — Called by `SessionStart` hook. Reads hook payload from stdin, inserts session into SQLite, starts background daemon if not running.
 - `unregister` — Called by `SessionEnd` hook. Removes session from SQLite. If no sessions remain, sends stop and kills daemon.
-- `serve` — Long-running background process. Every 30s checks transcript file mtimes. If any session has activity within 15 minutes, sends heartbeat with session count. Auto-exits after 30 minutes with zero registered sessions.
+- `serve` — Long-running background process. Every 30s parses transcript JSONL files incrementally, computing per-session metrics (tokens, tool calls, user prompts, active time, last prompt). Sends rich heartbeat payload. Auto-exits after 30 minutes with zero registered sessions.
 
 **State:** `~/.cc-live/state.db` (SQLite via `modernc.org/sqlite`, pure Go, no CGo)
 
 ## How It Works
 
-1. **Heartbeat API** (`POST /api/live/heartbeat`): The local daemon sends this every 30s over Tailscale with JSON body `{"sessions": N}`. Authenticated via `Authorization: Bearer <key>`.
+1. **Heartbeat API** (`POST /api/live/heartbeat`): The local daemon sends this every 30s with JSON body `{"sessions": [{session_id, total_tokens, tool_calls, user_prompts, active_time_seconds, last_prompt, project, model}, ...]}`. Authenticated via `Authorization: Bearer <key>`.
 2. **Stop API** (`POST /api/live/stop`): Sent when all sessions are unregistered for immediate deactivation.
 3. **Expiry**: Background goroutine checks every 10s. If no heartbeat in 60s, marks inactive and broadcasts.
-4. **WebSocket** (`GET /ws/live`): Browser clients connect here. Receives `{"active": true/false, "sessions": N}` on connect and on every state change.
+4. **WebSocket** (`GET /ws/live`): Browser clients connect here. Receives `{"active": true/false, "sessions": [...]}` on connect and on every state change.
 
 ## Files
 

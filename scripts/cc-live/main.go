@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"database/sql"
 	"encoding/json"
@@ -36,6 +37,25 @@ type hookPayload struct {
 	Model          string `json:"model"`
 }
 
+type sessionMetrics struct {
+	SessionID   string `json:"session_id"`
+	TotalTokens int64  `json:"total_tokens"`
+	ToolCalls   int    `json:"tool_calls"`
+	UserPrompts int    `json:"user_prompts"`
+	ActiveTime  int    `json:"active_time_seconds"`
+	LastPrompt  string `json:"last_prompt"`
+	Project     string `json:"project"`
+	Model       string `json:"model"`
+}
+
+type fileTracker struct {
+	offset   int64
+	metrics  sessionMetrics
+	lastTime time.Time
+}
+
+const maxIdleGap = 300 // 5 minutes — cap gaps between entries
+
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
@@ -62,20 +82,31 @@ func main() {
 }
 
 func openDB() *sql.DB {
-	db, err := sql.Open("sqlite", dbPath+"?_journal_mode=WAL&_busy_timeout=5000")
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		log.Fatalf("opening db: %v", err)
 	}
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS sessions (
-		session_id TEXT PRIMARY KEY,
-		transcript_path TEXT NOT NULL,
-		cwd TEXT NOT NULL,
-		model TEXT NOT NULL DEFAULT '',
-		registered_at TEXT NOT NULL
-	)`)
-	if err != nil {
-		log.Fatalf("creating table: %v", err)
+	// Set pragmas explicitly — connection string params don't work reliably
+	// with modernc.org/sqlite.
+	db.Exec(`PRAGMA journal_mode=WAL`)
+	db.Exec(`PRAGMA busy_timeout=10000`)
+
+	// Retry CREATE TABLE to handle lock contention when the daemon's serve
+	// process already holds the DB open.
+	for attempt := 0; attempt < 5; attempt++ {
+		_, err = db.Exec(`CREATE TABLE IF NOT EXISTS sessions (
+			session_id TEXT PRIMARY KEY,
+			transcript_path TEXT NOT NULL,
+			cwd TEXT NOT NULL,
+			model TEXT NOT NULL DEFAULT '',
+			registered_at TEXT NOT NULL
+		)`)
+		if err == nil {
+			return db
+		}
+		time.Sleep(200 * time.Millisecond)
 	}
+	log.Fatalf("creating table after retries: %v", err)
 	return db
 }
 
@@ -230,6 +261,8 @@ func cmdServe() {
 	db := openDB()
 	defer db.Close()
 
+	trackers := make(map[string]*fileTracker)
+
 	wasActive := false
 	emptyTicks := 0
 	const maxEmptyMinutes = 30
@@ -240,9 +273,9 @@ func cmdServe() {
 	defer ticker.Stop()
 
 	// Do an immediate check on startup
-	active, count := checkSessions(db, activityTimeout)
+	active, metrics := checkSessions(db, activityTimeout, trackers)
 	if active {
-		sendHeartbeat(endpoint, apiKey, count)
+		sendHeartbeat(endpoint, apiKey, metrics)
 		wasActive = true
 	}
 
@@ -260,6 +293,10 @@ func cmdServe() {
 				sendStop()
 				wasActive = false
 			}
+			// Clean up trackers for removed sessions
+			for k := range trackers {
+				delete(trackers, k)
+			}
 			if emptyTicks >= maxEmptyMinutes*60/int(tickInterval.Seconds()) {
 				log.Println("no sessions for 30 minutes, exiting")
 				return
@@ -268,10 +305,10 @@ func cmdServe() {
 		}
 		emptyTicks = 0
 
-		active, count := checkSessions(db, activityTimeout)
+		active, metrics := checkSessions(db, activityTimeout, trackers)
 
 		if active {
-			sendHeartbeat(endpoint, apiKey, count)
+			sendHeartbeat(endpoint, apiKey, metrics)
 			wasActive = true
 		} else if wasActive {
 			sendStop()
@@ -280,55 +317,252 @@ func cmdServe() {
 	}
 }
 
-// checkSessions checks all registered sessions for recent transcript activity.
-func checkSessions(db *sql.DB, timeout time.Duration) (active bool, count int) {
-	rows, err := db.Query(`SELECT session_id, transcript_path, registered_at FROM sessions`)
+// checkSessions checks all registered sessions, parses transcripts incrementally,
+// and returns per-session metrics.
+func checkSessions(db *sql.DB, timeout time.Duration, trackers map[string]*fileTracker) (active bool, metrics []sessionMetrics) {
+	rows, err := db.Query(`SELECT session_id, transcript_path, cwd, model, registered_at FROM sessions`)
 	if err != nil {
 		log.Printf("querying sessions: %v", err)
-		return false, 0
+		return false, nil
 	}
 	defer rows.Close()
 
 	now := time.Now()
+	activeIDs := make(map[string]bool)
+
 	for rows.Next() {
-		var sessionID, transcriptPath, registeredAt string
-		if err := rows.Scan(&sessionID, &transcriptPath, &registeredAt); err != nil {
+		var sessionID, transcriptPath, cwd, model, registeredAt string
+		if err := rows.Scan(&sessionID, &transcriptPath, &cwd, &model, &registeredAt); err != nil {
 			log.Printf("scanning row: %v", err)
 			continue
 		}
 
+		activeIDs[sessionID] = true
+		project := filepath.Base(cwd)
+
+		// Get or create tracker
+		tracker, ok := trackers[sessionID]
+		if !ok {
+			tracker = &fileTracker{
+				metrics: sessionMetrics{
+					SessionID: sessionID,
+					Project:   project,
+					Model:     model,
+				},
+			}
+			trackers[sessionID] = tracker
+		}
+
 		if transcriptPath == "" {
-			// No transcript path — can't check activity, assume active
-			count++
+			// No transcript path — can't check activity, assume active with zero metrics
+			tracker.metrics.Project = project
+			tracker.metrics.Model = model
+			metrics = append(metrics, tracker.metrics)
 			continue
 		}
 
 		info, err := os.Stat(transcriptPath)
 		if err != nil {
-			// Transcript file doesn't exist yet — this is normal right after
-			// SessionStart (file is created on first API response). Fall back
-			// to registration time to decide if session is still "new".
+			// Transcript file doesn't exist yet — fall back to registration time
 			regTime, parseErr := time.Parse(time.RFC3339, registeredAt)
 			if parseErr == nil && now.Sub(regTime) < timeout {
-				count++
+				tracker.metrics.Project = project
+				tracker.metrics.Model = model
+				metrics = append(metrics, tracker.metrics)
 			}
 			continue
 		}
 
-		if now.Sub(info.ModTime()) < timeout {
-			count++
+		if now.Sub(info.ModTime()) >= timeout {
+			continue
+		}
+
+		// Parse new transcript lines
+		parseTranscriptIncremental(transcriptPath, tracker)
+		tracker.metrics.Project = project
+		tracker.metrics.Model = model
+
+		// Skip non-conversation transcripts (e.g. file-history-snapshot only)
+		if tracker.metrics.UserPrompts == 0 && tracker.metrics.TotalTokens == 0 {
+			continue
+		}
+
+		metrics = append(metrics, tracker.metrics)
+	}
+
+	// Clean up trackers for sessions no longer in the DB
+	for k := range trackers {
+		if !activeIDs[k] {
+			delete(trackers, k)
 		}
 	}
 
-	return count > 0, count
+	return len(metrics) > 0, metrics
+}
+
+// parseTranscriptIncremental reads new JSONL lines from the given transcript file
+// starting at the tracker's offset, and accumulates metrics.
+func parseTranscriptIncremental(path string, tracker *fileTracker) {
+	f, err := os.Open(path)
+	if err != nil {
+		log.Printf("opening transcript %s: %v", path, err)
+		return
+	}
+	defer f.Close()
+
+	// Seek to last known offset
+	if tracker.offset > 0 {
+		if _, err := f.Seek(tracker.offset, io.SeekStart); err != nil {
+			log.Printf("seeking transcript %s: %v", path, err)
+			return
+		}
+	}
+
+	scanner := bufio.NewScanner(f)
+	// Increase buffer size for large JSONL lines
+	scanner.Buffer(make([]byte, 0, 256*1024), 1024*1024)
+
+	var bytesRead int64
+	for scanner.Scan() {
+		line := scanner.Text()
+		lineLen := int64(len(line)) + 1 // +1 for newline
+		bytesRead += lineLen
+
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		var entry map[string]interface{}
+		if err := json.Unmarshal([]byte(line), &entry); err != nil {
+			continue
+		}
+
+		processEntry(entry, tracker)
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Printf("scanning transcript %s: %v", path, err)
+	}
+
+	tracker.offset += bytesRead
+}
+
+// processEntry processes a single transcript JSONL entry and updates tracker metrics.
+func processEntry(entry map[string]interface{}, tracker *fileTracker) {
+	entryType, _ := entry["type"].(string)
+	msg, _ := entry["message"].(map[string]interface{})
+	if msg == nil {
+		return
+	}
+
+	// Parse timestamp for active time calculation
+	if ts, ok := entry["timestamp"].(string); ok && ts != "" {
+		t, err := time.Parse(time.RFC3339Nano, strings.Replace(ts, "Z", "+00:00", 1))
+		if err != nil {
+			// Try with Z suffix directly
+			t, err = time.Parse("2006-01-02T15:04:05.999999999Z", ts)
+			if err != nil {
+				t, _ = time.Parse(time.RFC3339, strings.Replace(ts, "Z", "+00:00", 1))
+			}
+		}
+		if !t.IsZero() {
+			if !tracker.lastTime.IsZero() {
+				gap := int(t.Sub(tracker.lastTime).Seconds())
+				if gap < 0 {
+					gap = 0
+				}
+				if gap > maxIdleGap {
+					gap = maxIdleGap
+				}
+				tracker.metrics.ActiveTime += gap
+			}
+			tracker.lastTime = t
+		}
+	}
+
+	content, _ := msg["content"].([]interface{})
+
+	switch entryType {
+	case "user":
+		// Count user prompts and extract last prompt text
+		rawContent := msg["content"]
+		if str, ok := rawContent.(string); ok && strings.TrimSpace(str) != "" {
+			tracker.metrics.UserPrompts++
+			prompt := strings.TrimSpace(str)
+			if len(prompt) > 500 {
+				prompt = prompt[:500]
+			}
+			tracker.metrics.LastPrompt = prompt
+		} else if content != nil {
+			hasText := false
+			var lastText string
+			for _, c := range content {
+				block, ok := c.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				if block["type"] == "text" {
+					text, _ := block["text"].(string)
+					if strings.TrimSpace(text) != "" {
+						hasText = true
+						lastText = strings.TrimSpace(text)
+					}
+				}
+			}
+			if hasText {
+				tracker.metrics.UserPrompts++
+				if len(lastText) > 500 {
+					lastText = lastText[:500]
+				}
+				tracker.metrics.LastPrompt = lastText
+			}
+		}
+
+	case "assistant":
+		// Count tool_use blocks
+		for _, c := range content {
+			block, ok := c.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if block["type"] == "tool_use" {
+				tracker.metrics.ToolCalls++
+			}
+		}
+
+		// Sum tokens from usage
+		usage, _ := msg["usage"].(map[string]interface{})
+		if usage != nil {
+			tracker.metrics.TotalTokens += toInt64(usage["input_tokens"])
+			tracker.metrics.TotalTokens += toInt64(usage["output_tokens"])
+			tracker.metrics.TotalTokens += toInt64(usage["cache_creation_input_tokens"])
+			tracker.metrics.TotalTokens += toInt64(usage["cache_read_input_tokens"])
+		}
+	}
+}
+
+func toInt64(v interface{}) int64 {
+	switch n := v.(type) {
+	case float64:
+		return int64(n)
+	case int64:
+		return n
+	case json.Number:
+		i, _ := n.Int64()
+		return i
+	}
+	return 0
 }
 
 func getEndpointAndKey() (string, string) {
 	return os.Getenv("CC_LIVE_ENDPOINT"), os.Getenv("CC_LIVE_API_KEY")
 }
 
-func sendHeartbeat(endpoint, apiKey string, sessions int) {
-	body, _ := json.Marshal(map[string]int{"sessions": sessions})
+func sendHeartbeat(endpoint, apiKey string, sessions []sessionMetrics) {
+	payload := struct {
+		Sessions []sessionMetrics `json:"sessions"`
+	}{Sessions: sessions}
+	body, _ := json.Marshal(payload)
 	req, err := http.NewRequest(http.MethodPost, endpoint+"/api/live/heartbeat", bytes.NewReader(body))
 	if err != nil {
 		log.Printf("creating heartbeat request: %v", err)
