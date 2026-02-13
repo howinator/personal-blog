@@ -15,14 +15,18 @@ import (
 )
 
 type sessionData struct {
-	SessionID   string `json:"session_id"`
-	TotalTokens int64  `json:"total_tokens"`
-	ToolCalls   int    `json:"tool_calls"`
-	UserPrompts int    `json:"user_prompts"`
-	ActiveTime  int    `json:"active_time_seconds"`
-	LastPrompt  string `json:"last_prompt"`
-	Project     string `json:"project"`
-	Model       string `json:"model"`
+	SessionID    string `json:"session_id"`
+	TotalTokens  int64  `json:"total_tokens"`
+	InputTokens  int64  `json:"input_tokens"`
+	OutputTokens int64  `json:"output_tokens"`
+	ToolCalls    int    `json:"tool_calls"`
+	UserPrompts  int    `json:"user_prompts"`
+	ActiveTime   int    `json:"active_time_seconds"`
+	LastPrompt   string `json:"last_prompt"`
+	Project      string `json:"project"`
+	Model        string `json:"model"`
+	Sensitive    bool   `json:"sensitive"`
+	Summary      string `json:"summary"`
 }
 
 type state struct {

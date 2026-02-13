@@ -88,15 +88,17 @@ Go WebSocket sidecar that shows a live status dot in the nav when a Claude Code 
 **Claude Code hooks** (`~/.claude/settings.json`):
 - `SessionStart` → `cc-live-daemon register` (registers session, starts daemon)
 - `SessionEnd` → `cc-live-daemon unregister` (removes session, stops daemon if none left)
-- `SessionEnd` → `scripts/cc-stats/` (processes session stats)
 
 **Daemon Makefile targets:**
 - `make build-daemon` — compile daemon binary to `~/.cc-live/`
 - `make restart-daemon` — build + kill old daemon (auto-restarts on next hook)
 - `make reset-daemon` — build + kill + wipe SQLite DB + rotate logs
+- `make sync` — build daemon + run sync (reparse all transcripts → SQLite → JSON)
+
+**Sensitive sessions:** Start with `CC_LIVE_SENSITIVE=1 claude` to redact prompts. The live dot and metrics still work, but the displayed prompt is replaced with random noise of the same length. Redaction happens in the daemon before the heartbeat is sent — the real prompt never leaves the laptop. Per-session flag stored in SQLite, so concurrent sessions can mix sensitive and normal.
 
 **Debugging:** See `services/cc-live/debugging.md` for known issues (SQLITE_BUSY on hooks, zombie sessions, scientific notation, typewriter replay).
 
 ## Claude Code Session Stats
 
-Session stats are collected by `scripts/cc-stats/` (Python, zero deps). See `scripts/cc-stats/AGENTS.md`. Data stored in `data/cc_sessions.json`, rendered by the `cc-sessions` shortcode on the `/claude-log/` page.
+Session stats are managed by the cc-live daemon's `sync` subcommand. `cc-live-daemon sync` reparses all transcripts from `~/.claude/projects/` into the `session_stats` SQLite table, generates LLM summaries via the Anthropic API, and exports `data/cc_sessions.json` for Hugo. The `make build` target runs `make sync` automatically before the container build. During live sessions, the daemon also persists metrics and generates summaries in real-time.

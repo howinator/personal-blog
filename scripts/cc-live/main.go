@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/exec"
@@ -38,23 +39,44 @@ type hookPayload struct {
 }
 
 type sessionMetrics struct {
-	SessionID   string `json:"session_id"`
-	TotalTokens int64  `json:"total_tokens"`
-	ToolCalls   int    `json:"tool_calls"`
-	UserPrompts int    `json:"user_prompts"`
-	ActiveTime  int    `json:"active_time_seconds"`
-	LastPrompt  string `json:"last_prompt"`
-	Project     string `json:"project"`
-	Model       string `json:"model"`
+	SessionID    string `json:"session_id"`
+	TotalTokens  int64  `json:"total_tokens"`
+	InputTokens  int64  `json:"input_tokens"`
+	OutputTokens int64  `json:"output_tokens"`
+	ToolCalls    int    `json:"tool_calls"`
+	UserPrompts  int    `json:"user_prompts"`
+	ActiveTime   int    `json:"active_time_seconds"`
+	LastPrompt   string `json:"last_prompt"`
+	Project      string `json:"project"`
+	Model        string `json:"model"`
+	Sensitive    bool   `json:"sensitive"`
+	Summary      string `json:"summary"`
 }
 
 type fileTracker struct {
-	offset   int64
-	metrics  sessionMetrics
-	lastTime time.Time
+	offset               int64
+	metrics              sessionMetrics
+	lastTime             time.Time
+	userTexts            []string // all user prompt texts (for summary generation)
+	summaryGenerated     bool     // don't re-call LLM after first generation
+	hasAssistantResponse bool     // seen at least one assistant entry
+	// Entry-level metadata extracted from transcript (used by sync)
+	transcriptSessionID string
+	transcriptCwd       string
+	transcriptVersion   string
+	firstTimestamp      string // session date (ISO string from first entry)
 }
 
 const maxIdleGap = 300 // 5 minutes — cap gaps between entries
+
+// transcriptOverrides supply values from the hook payload that may not yet be in
+// the transcript (e.g. model, sensitive flag).
+type transcriptOverrides struct {
+	SessionID string
+	Cwd       string
+	Model     string
+	Sensitive bool
+}
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -64,7 +86,7 @@ func main() {
 	}
 
 	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr, "usage: cc-live-daemon <register|unregister|serve>\n")
+		fmt.Fprintf(os.Stderr, "usage: cc-live-daemon <register|unregister|serve|sync>\n")
 		os.Exit(1)
 	}
 
@@ -75,6 +97,8 @@ func main() {
 		cmdUnregister()
 	case "serve":
 		cmdServe()
+	case "sync":
+		cmdSync()
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", os.Args[1])
 		os.Exit(1)
@@ -102,6 +126,28 @@ func openDB() *sql.DB {
 			registered_at TEXT NOT NULL
 		)`)
 		if err == nil {
+			// Migration: add sensitive column (silently fails if already exists)
+			db.Exec(`ALTER TABLE sessions ADD COLUMN sensitive INTEGER NOT NULL DEFAULT 0`)
+
+			// Session stats table — source of truth for cc_sessions.json
+			db.Exec(`CREATE TABLE IF NOT EXISTS session_stats (
+				session_id TEXT PRIMARY KEY,
+				transcript_path TEXT NOT NULL DEFAULT '',
+				cwd TEXT NOT NULL DEFAULT '',
+				project TEXT NOT NULL DEFAULT '',
+				model TEXT NOT NULL DEFAULT '',
+				date TEXT NOT NULL DEFAULT '',
+				summary TEXT NOT NULL DEFAULT '',
+				num_user_prompts INTEGER NOT NULL DEFAULT 0,
+				num_tool_calls INTEGER NOT NULL DEFAULT 0,
+				total_input_tokens INTEGER NOT NULL DEFAULT 0,
+				total_output_tokens INTEGER NOT NULL DEFAULT 0,
+				total_tokens INTEGER NOT NULL DEFAULT 0,
+				active_time_seconds INTEGER NOT NULL DEFAULT 0,
+				cc_version TEXT NOT NULL DEFAULT '',
+				sensitive INTEGER NOT NULL DEFAULT 0,
+				updated_at TEXT NOT NULL DEFAULT ''
+			)`)
 			return db
 		}
 		time.Sleep(200 * time.Millisecond)
@@ -128,16 +174,32 @@ func cmdRegister() {
 		log.Fatal("session_id is required")
 	}
 
+	isSensitive := os.Getenv("CC_LIVE_SENSITIVE") == "1"
+	sensitive := 0
+	if isSensitive {
+		sensitive = 1
+	}
+
 	db := openDB()
 	defer db.Close()
 
 	_, err := db.Exec(
-		`INSERT OR REPLACE INTO sessions (session_id, transcript_path, cwd, model, registered_at)
-		 VALUES (?, ?, ?, ?, ?)`,
-		p.SessionID, p.TranscriptPath, p.Cwd, p.Model, time.Now().UTC().Format(time.RFC3339),
+		`INSERT OR REPLACE INTO sessions (session_id, transcript_path, cwd, model, registered_at, sensitive)
+		 VALUES (?, ?, ?, ?, ?, ?)`,
+		p.SessionID, p.TranscriptPath, p.Cwd, p.Model, time.Now().UTC().Format(time.RFC3339), sensitive,
 	)
 	if err != nil {
 		log.Fatalf("inserting session: %v", err)
+	}
+
+	// Also process transcript into session_stats
+	if p.TranscriptPath != "" {
+		processTranscript(db, p.TranscriptPath, &transcriptOverrides{
+			SessionID: p.SessionID,
+			Cwd:       p.Cwd,
+			Model:     p.Model,
+			Sensitive: isSensitive,
+		})
 	}
 
 	// Ensure daemon is running
@@ -171,6 +233,92 @@ func cmdUnregister() {
 		sendStop()
 		killDaemon()
 	}
+}
+
+// processTranscript parses a transcript file and upserts metrics into session_stats.
+// overrides supply values from the hook payload that may not yet be in the transcript.
+// Returns the parsed tracker for further use (e.g. summary generation), or nil if skipped.
+func processTranscript(db *sql.DB, transcriptPath string, overrides *transcriptOverrides) (*fileTracker, error) {
+	tracker := &fileTracker{}
+	parseTranscriptIncremental(transcriptPath, tracker)
+
+	// Resolve metadata: prefer overrides > tracker's extracted values
+	sessionID := tracker.transcriptSessionID
+	cwd := tracker.transcriptCwd
+	model := ""
+	sensitive := false
+	if overrides != nil {
+		if overrides.SessionID != "" {
+			sessionID = overrides.SessionID
+		}
+		if overrides.Cwd != "" {
+			cwd = overrides.Cwd
+		}
+		model = overrides.Model
+		sensitive = overrides.Sensitive
+	}
+
+	// Fallback: derive session_id from filename (UUID.jsonl)
+	if sessionID == "" {
+		base := filepath.Base(transcriptPath)
+		sessionID = strings.TrimSuffix(base, filepath.Ext(base))
+	}
+
+	if sessionID == "" {
+		return nil, fmt.Errorf("no session_id for %s", transcriptPath)
+	}
+
+	// Skip empty transcripts
+	if tracker.metrics.UserPrompts == 0 && tracker.metrics.TotalTokens == 0 {
+		return nil, nil
+	}
+
+	project := filepath.Base(cwd)
+	if project == "" || project == "." {
+		project = "unknown"
+	}
+
+	sensitiveInt := 0
+	if sensitive {
+		sensitiveInt = 1
+	}
+
+	// Upsert into session_stats, preserving existing non-empty summary
+	_, err := db.Exec(`INSERT INTO session_stats
+		(session_id, transcript_path, cwd, project, model, date, summary,
+		 num_user_prompts, num_tool_calls, total_input_tokens, total_output_tokens,
+		 total_tokens, active_time_seconds, cc_version, sensitive, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, '',
+		 ?, ?, ?, ?,
+		 ?, ?, ?, ?, ?)
+		ON CONFLICT(session_id) DO UPDATE SET
+		 transcript_path = excluded.transcript_path,
+		 cwd = CASE WHEN excluded.cwd != '' THEN excluded.cwd ELSE session_stats.cwd END,
+		 project = CASE WHEN excluded.project != '' AND excluded.project != 'unknown' THEN excluded.project ELSE session_stats.project END,
+		 model = CASE WHEN excluded.model != '' THEN excluded.model ELSE session_stats.model END,
+		 date = CASE WHEN excluded.date != '' THEN excluded.date ELSE session_stats.date END,
+		 summary = CASE WHEN session_stats.summary != '' THEN session_stats.summary ELSE excluded.summary END,
+		 num_user_prompts = excluded.num_user_prompts,
+		 num_tool_calls = excluded.num_tool_calls,
+		 total_input_tokens = excluded.total_input_tokens,
+		 total_output_tokens = excluded.total_output_tokens,
+		 total_tokens = excluded.total_tokens,
+		 active_time_seconds = excluded.active_time_seconds,
+		 cc_version = CASE WHEN excluded.cc_version != '' THEN excluded.cc_version ELSE session_stats.cc_version END,
+		 sensitive = excluded.sensitive,
+		 updated_at = excluded.updated_at`,
+		sessionID, transcriptPath, cwd, project, model, tracker.firstTimestamp,
+		tracker.metrics.UserPrompts, tracker.metrics.ToolCalls,
+		tracker.metrics.InputTokens, tracker.metrics.OutputTokens,
+		tracker.metrics.TotalTokens, tracker.metrics.ActiveTime,
+		tracker.transcriptVersion, sensitiveInt,
+		time.Now().UTC().Format(time.RFC3339),
+	)
+	if err != nil {
+		return tracker, fmt.Errorf("upserting session_stats: %w", err)
+	}
+
+	return tracker, nil
 }
 
 func isDaemonRunning() bool {
@@ -240,6 +388,198 @@ func killDaemon() {
 	}
 	_ = proc.Signal(syscall.SIGTERM)
 	os.Remove(pidFile)
+}
+
+func cmdSync() {
+	db := openDB()
+	defer db.Close()
+
+	transcripts := discoverTranscripts()
+	log.Printf("sync: discovered %d transcripts", len(transcripts))
+
+	// Process all transcripts — collect userTexts for summary generation
+	type trackerInfo struct {
+		sessionID string
+		userTexts []string
+	}
+	var needsSummary []trackerInfo
+
+	for _, path := range transcripts {
+		tracker, err := processTranscript(db, path, nil)
+		if err != nil {
+			log.Printf("sync: processing %s: %v", path, err)
+			continue
+		}
+		if tracker == nil {
+			continue
+		}
+		// Check if this session needs a summary
+		sid := tracker.transcriptSessionID
+		if sid == "" {
+			sid = strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+		}
+		needsSummary = append(needsSummary, trackerInfo{
+			sessionID: sid,
+			userTexts: tracker.userTexts,
+		})
+	}
+
+	// Generate missing summaries
+	generated := 0
+	for _, info := range needsSummary {
+		var existing string
+		var sensitive int
+		err := db.QueryRow(`SELECT summary, sensitive FROM session_stats WHERE session_id = ?`, info.sessionID).Scan(&existing, &sensitive)
+		if err != nil {
+			continue
+		}
+		if existing != "" {
+			continue // already has a summary
+		}
+		if sensitive == 1 {
+			continue // don't generate for sensitive sessions
+		}
+		summary := generateSummary(info.userTexts, 30*time.Second)
+		db.Exec(`UPDATE session_stats SET summary = ? WHERE session_id = ?`, summary, info.sessionID)
+		generated++
+	}
+	log.Printf("sync: generated %d summaries", generated)
+
+	// Export to JSON
+	exportSessionsJSON(db)
+}
+
+// discoverTranscripts walks ~/.claude/projects/ for transcript JSONL files.
+func discoverTranscripts() []string {
+	claudeDir := filepath.Join(os.Getenv("HOME"), ".claude", "projects")
+	var paths []string
+
+	filepath.Walk(claudeDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil // skip errors
+		}
+		// Skip subagents directories
+		if info.IsDir() && info.Name() == "subagents" {
+			return filepath.SkipDir
+		}
+		if !info.IsDir() && strings.HasSuffix(info.Name(), ".jsonl") {
+			paths = append(paths, path)
+		}
+		return nil
+	})
+
+	return paths
+}
+
+// sessionExport matches the exact JSON schema expected by Hugo's cc-sessions shortcode.
+type sessionExport struct {
+	SessionID        string `json:"session_id"`
+	Date             string `json:"date"`
+	DateDisplay      string `json:"date_display"`
+	Summary          string `json:"summary"`
+	Project          string `json:"project"`
+	Cwd              string `json:"cwd"`
+	NumUserPrompts   int    `json:"num_user_prompts"`
+	NumToolCalls     int    `json:"num_tool_calls"`
+	TotalInputTokens int64  `json:"total_input_tokens"`
+	TotalOutputTokens int64 `json:"total_output_tokens"`
+	TotalTokens      int64  `json:"total_tokens"`
+	TotalTokensDisplay string `json:"total_tokens_display"`
+	ActiveTimeSeconds int   `json:"active_time_seconds"`
+	ActiveTimeDisplay string `json:"active_time_display"`
+	CcVersion        string `json:"cc_version"`
+}
+
+type totalsExport struct {
+	SessionCount          int    `json:"session_count"`
+	TotalTokens           int64  `json:"total_tokens"`
+	TotalTokensDisplay    string `json:"total_tokens_display"`
+	TotalToolCalls        int    `json:"total_tool_calls"`
+	TotalActiveTimeSeconds int   `json:"total_active_time_seconds"`
+	TotalActiveTimeDisplay string `json:"total_active_time_display"`
+}
+
+type dataExport struct {
+	Sessions []sessionExport `json:"sessions"`
+	Totals   totalsExport    `json:"totals"`
+}
+
+func exportSessionsJSON(db *sql.DB) {
+	rows, err := db.Query(`SELECT session_id, date, summary, project, cwd,
+		num_user_prompts, num_tool_calls, total_input_tokens, total_output_tokens,
+		total_tokens, active_time_seconds, cc_version
+		FROM session_stats ORDER BY date DESC`)
+	if err != nil {
+		log.Fatalf("querying session_stats for export: %v", err)
+	}
+	defer rows.Close()
+
+	var sessions []sessionExport
+	var totalTokens int64
+	var totalToolCalls int
+	var totalActiveTime int
+
+	for rows.Next() {
+		var s sessionExport
+		if err := rows.Scan(&s.SessionID, &s.Date, &s.Summary, &s.Project, &s.Cwd,
+			&s.NumUserPrompts, &s.NumToolCalls, &s.TotalInputTokens, &s.TotalOutputTokens,
+			&s.TotalTokens, &s.ActiveTimeSeconds, &s.CcVersion); err != nil {
+			log.Printf("scanning export row: %v", err)
+			continue
+		}
+		s.DateDisplay = formatDate(s.Date)
+		s.TotalTokensDisplay = formatTokens(s.TotalTokens)
+		s.ActiveTimeDisplay = formatTime(s.ActiveTimeSeconds)
+		sessions = append(sessions, s)
+
+		totalTokens += s.TotalTokens
+		totalToolCalls += s.NumToolCalls
+		totalActiveTime += s.ActiveTimeSeconds
+	}
+
+	data := dataExport{
+		Sessions: sessions,
+		Totals: totalsExport{
+			SessionCount:          len(sessions),
+			TotalTokens:           totalTokens,
+			TotalTokensDisplay:    formatTokens(totalTokens),
+			TotalToolCalls:        totalToolCalls,
+			TotalActiveTimeSeconds: totalActiveTime,
+			TotalActiveTimeDisplay: formatTime(totalActiveTime),
+		},
+	}
+
+	blogRoot := os.Getenv("CC_STATS_BLOG_ROOT")
+	if blogRoot == "" {
+		blogRoot = filepath.Join(os.Getenv("HOME"), "projects", "personal-blog")
+	}
+	dataFile := filepath.Join(blogRoot, "data", "cc_sessions.json")
+
+	// Ensure directory exists
+	os.MkdirAll(filepath.Dir(dataFile), 0o755)
+
+	// Atomic write: temp file + rename
+	tmpFile, err := os.CreateTemp(filepath.Dir(dataFile), "cc_sessions_*.json")
+	if err != nil {
+		log.Fatalf("creating temp file: %v", err)
+	}
+	tmpPath := tmpFile.Name()
+
+	enc := json.NewEncoder(tmpFile)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(data); err != nil {
+		tmpFile.Close()
+		os.Remove(tmpPath)
+		log.Fatalf("encoding JSON: %v", err)
+	}
+	tmpFile.Close()
+
+	if err := os.Rename(tmpPath, dataFile); err != nil {
+		os.Remove(tmpPath)
+		log.Fatalf("renaming temp file: %v", err)
+	}
+
+	log.Printf("sync: exported %d sessions to %s", len(sessions), dataFile)
 }
 
 func cmdServe() {
@@ -320,7 +660,7 @@ func cmdServe() {
 // checkSessions checks all registered sessions, parses transcripts incrementally,
 // and returns per-session metrics.
 func checkSessions(db *sql.DB, timeout time.Duration, trackers map[string]*fileTracker) (active bool, metrics []sessionMetrics) {
-	rows, err := db.Query(`SELECT session_id, transcript_path, cwd, model, registered_at FROM sessions`)
+	rows, err := db.Query(`SELECT session_id, transcript_path, cwd, model, registered_at, sensitive FROM sessions`)
 	if err != nil {
 		log.Printf("querying sessions: %v", err)
 		return false, nil
@@ -332,13 +672,16 @@ func checkSessions(db *sql.DB, timeout time.Duration, trackers map[string]*fileT
 
 	for rows.Next() {
 		var sessionID, transcriptPath, cwd, model, registeredAt string
-		if err := rows.Scan(&sessionID, &transcriptPath, &cwd, &model, &registeredAt); err != nil {
+		var sensitive int
+		if err := rows.Scan(&sessionID, &transcriptPath, &cwd, &model, &registeredAt, &sensitive); err != nil {
 			log.Printf("scanning row: %v", err)
 			continue
 		}
 
 		activeIDs[sessionID] = true
 		project := filepath.Base(cwd)
+
+		isSensitive := sensitive == 1
 
 		// Get or create tracker
 		tracker, ok := trackers[sessionID]
@@ -348,10 +691,18 @@ func checkSessions(db *sql.DB, timeout time.Duration, trackers map[string]*fileT
 					SessionID: sessionID,
 					Project:   project,
 					Model:     model,
+					Sensitive: isSensitive,
 				},
+			}
+			// Load existing summary from session_stats
+			var existingSummary string
+			if err := db.QueryRow(`SELECT summary FROM session_stats WHERE session_id = ?`, sessionID).Scan(&existingSummary); err == nil && existingSummary != "" {
+				tracker.metrics.Summary = existingSummary
+				tracker.summaryGenerated = true
 			}
 			trackers[sessionID] = tracker
 		}
+		tracker.metrics.Sensitive = isSensitive
 
 		if transcriptPath == "" {
 			// No transcript path — can't check activity, assume active with zero metrics
@@ -387,7 +738,51 @@ func checkSessions(db *sql.DB, timeout time.Duration, trackers map[string]*fileT
 			continue
 		}
 
-		metrics = append(metrics, tracker.metrics)
+		// Generate summary after first full turn (user prompt + assistant response)
+		if tracker.metrics.UserPrompts >= 1 && tracker.hasAssistantResponse && !tracker.summaryGenerated {
+			if !isSensitive {
+				summary := generateSummary(tracker.userTexts, 10*time.Second)
+				tracker.metrics.Summary = summary
+			}
+			tracker.summaryGenerated = true // don't retry (also skips for sensitive)
+		}
+
+		// Persist metrics to session_stats on each tick
+		sensitiveInt := 0
+		if isSensitive {
+			sensitiveInt = 1
+		}
+		db.Exec(`INSERT INTO session_stats
+			(session_id, transcript_path, cwd, project, model, date, summary,
+			 num_user_prompts, num_tool_calls, total_input_tokens, total_output_tokens,
+			 total_tokens, active_time_seconds, cc_version, sensitive, updated_at)
+			VALUES (?, ?, ?, ?, ?, ?, ?,
+			 ?, ?, ?, ?,
+			 ?, ?, ?, ?, ?)
+			ON CONFLICT(session_id) DO UPDATE SET
+			 num_user_prompts = excluded.num_user_prompts,
+			 num_tool_calls = excluded.num_tool_calls,
+			 total_input_tokens = excluded.total_input_tokens,
+			 total_output_tokens = excluded.total_output_tokens,
+			 total_tokens = excluded.total_tokens,
+			 active_time_seconds = excluded.active_time_seconds,
+			 summary = CASE WHEN session_stats.summary != '' AND excluded.summary = ''
+			           THEN session_stats.summary ELSE excluded.summary END,
+			 updated_at = excluded.updated_at`,
+			sessionID, transcriptPath, cwd, project, model,
+			tracker.firstTimestamp, tracker.metrics.Summary,
+			tracker.metrics.UserPrompts, tracker.metrics.ToolCalls,
+			tracker.metrics.InputTokens, tracker.metrics.OutputTokens,
+			tracker.metrics.TotalTokens, tracker.metrics.ActiveTime,
+			tracker.transcriptVersion, sensitiveInt,
+			time.Now().UTC().Format(time.RFC3339),
+		)
+
+		m := tracker.metrics
+		if m.Sensitive && m.LastPrompt != "" {
+			m.LastPrompt = redactPrompt(m.LastPrompt)
+		}
+		metrics = append(metrics, m)
 	}
 
 	// Clean up trackers for sessions no longer in the DB
@@ -451,6 +846,29 @@ func parseTranscriptIncremental(path string, tracker *fileTracker) {
 func processEntry(entry map[string]interface{}, tracker *fileTracker) {
 	entryType, _ := entry["type"].(string)
 	msg, _ := entry["message"].(map[string]interface{})
+
+	// Extract entry-level metadata (first occurrence only)
+	if tracker.transcriptSessionID == "" {
+		if sid, ok := entry["sessionId"].(string); ok && sid != "" {
+			tracker.transcriptSessionID = sid
+		}
+	}
+	if tracker.transcriptCwd == "" {
+		if cwd, ok := entry["cwd"].(string); ok && cwd != "" {
+			tracker.transcriptCwd = cwd
+		}
+	}
+	if tracker.transcriptVersion == "" {
+		if ver, ok := entry["version"].(string); ok && ver != "" {
+			tracker.transcriptVersion = ver
+		}
+	}
+	if tracker.firstTimestamp == "" {
+		if ts, ok := entry["timestamp"].(string); ok && ts != "" {
+			tracker.firstTimestamp = ts
+		}
+	}
+
 	if msg == nil {
 		return
 	}
@@ -484,15 +902,22 @@ func processEntry(entry map[string]interface{}, tracker *fileTracker) {
 
 	switch entryType {
 	case "user":
-		// Count user prompts and extract last prompt text
+		// Count user prompts and extract last prompt text + collect all texts
 		rawContent := msg["content"]
 		if str, ok := rawContent.(string); ok && strings.TrimSpace(str) != "" {
 			tracker.metrics.UserPrompts++
-			prompt := strings.TrimSpace(str)
-			if len(prompt) > 500 {
-				prompt = prompt[:500]
+			text := strings.TrimSpace(str)
+			// Collect for summary generation (cap individual texts)
+			ut := text
+			if len(ut) > 4000 {
+				ut = ut[:4000]
 			}
-			tracker.metrics.LastPrompt = prompt
+			tracker.userTexts = append(tracker.userTexts, ut)
+			// LastPrompt for live display
+			if len(text) > 500 {
+				text = text[:500]
+			}
+			tracker.metrics.LastPrompt = text
 		} else if content != nil {
 			hasText := false
 			var lastText string
@@ -506,6 +931,12 @@ func processEntry(entry map[string]interface{}, tracker *fileTracker) {
 					if strings.TrimSpace(text) != "" {
 						hasText = true
 						lastText = strings.TrimSpace(text)
+						// Collect for summary generation
+						ut := strings.TrimSpace(text)
+						if len(ut) > 4000 {
+							ut = ut[:4000]
+						}
+						tracker.userTexts = append(tracker.userTexts, ut)
 					}
 				}
 			}
@@ -519,6 +950,7 @@ func processEntry(entry map[string]interface{}, tracker *fileTracker) {
 		}
 
 	case "assistant":
+		tracker.hasAssistantResponse = true
 		// Count tool_use blocks
 		for _, c := range content {
 			block, ok := c.(map[string]interface{})
@@ -533,12 +965,241 @@ func processEntry(entry map[string]interface{}, tracker *fileTracker) {
 		// Sum tokens from usage
 		usage, _ := msg["usage"].(map[string]interface{})
 		if usage != nil {
-			tracker.metrics.TotalTokens += toInt64(usage["input_tokens"])
-			tracker.metrics.TotalTokens += toInt64(usage["output_tokens"])
-			tracker.metrics.TotalTokens += toInt64(usage["cache_creation_input_tokens"])
-			tracker.metrics.TotalTokens += toInt64(usage["cache_read_input_tokens"])
+			input := toInt64(usage["input_tokens"]) + toInt64(usage["cache_creation_input_tokens"]) + toInt64(usage["cache_read_input_tokens"])
+			output := toInt64(usage["output_tokens"])
+			tracker.metrics.InputTokens += input
+			tracker.metrics.OutputTokens += output
+			tracker.metrics.TotalTokens += input + output
 		}
 	}
+}
+
+// redactPrompt replaces a prompt with CFG-generated espionage prose of the
+// same byte length. The RNG is seeded from the prompt content so the same
+// prompt produces identical output across ticks, avoiding re-triggering the
+// typewriter animation.
+func redactPrompt(prompt string) string {
+	subjects := []string{
+		"The operative", "A double agent", "The handler", "An informant",
+		"The analyst", "A courier", "The mole", "A cryptographer",
+		"The spymaster", "A sleeper agent", "The defector", "A sentinel",
+		"The asset", "A shadow broker", "The station chief", "A ghost",
+		"The cipher clerk", "A turncoat", "The extraction team", "A whistleblower",
+		"The case officer", "A deep cover agent", "The surveillance team", "A burned spy",
+	}
+	verbs := []string{
+		"intercepted", "classified", "concealed", "decoded",
+		"redacted", "smuggled", "shredded", "encrypted",
+		"exfiltrated", "neutralized", "compromised", "surveilled",
+		"extracted", "destroyed", "photographed", "sanitized",
+		"compartmentalized", "infiltrated", "debriefed", "forged",
+		"buried", "erased", "transmitted", "obfuscated",
+	}
+	objects := []string{
+		"the dossier", "a trade secret", "the dead drop", "the cipher key",
+		"the microfilm", "the blueprint", "the intel", "the codebook",
+		"the safe house", "a burn notice", "the cover story", "the frequency list",
+		"the asset roster", "a one-time pad", "the surveillance logs", "the escape route",
+		"the black site", "a forged passport", "the wire transcript", "the extraction plan",
+		"the sleeper list", "a classified memo", "the double agent's file", "the signal protocol",
+	}
+	adverbs := []string{
+		"covertly", "silently", "under deep cover", "at midnight",
+		"behind enemy lines", "through a back channel", "without a trace", "in the shadows",
+		"before dawn", "from a rooftop", "inside the embassy", "during the exchange",
+		"across the border", "under diplomatic cover", "via dead letter box", "on a secure line",
+		"after the rendezvous", "beneath the floorboards", "using invisible ink", "from the control room",
+		"under a false flag", "through the tunnels", "past the checkpoint", "off the grid",
+	}
+
+	// Deterministic seed from prompt content
+	var seed int64
+	for _, b := range []byte(prompt) {
+		seed = seed*31 + int64(b)
+	}
+	r := rand.New(rand.NewSource(seed))
+
+	pick := func(list []string) string { return list[r.Intn(len(list))] }
+	sentence := func() string {
+		return pick(subjects) + " " + pick(verbs) + " " + pick(objects) + " " + pick(adverbs) + "."
+	}
+
+	var buf strings.Builder
+	for buf.Len() < len(prompt) {
+		if buf.Len() > 0 {
+			buf.WriteByte(' ')
+		}
+		buf.WriteString(sentence())
+	}
+	return buf.String()[:len(prompt)]
+}
+
+// formatTokens formats a token count: ≥10M → "12.3M", else full number with commas.
+func formatTokens(n int64) string {
+	if n >= 10_000_000 {
+		return fmt.Sprintf("%.1fM", float64(n)/1_000_000)
+	}
+	// Format with commas
+	s := strconv.FormatInt(n, 10)
+	if n < 0 {
+		return s
+	}
+	// Insert commas from right
+	var result []byte
+	for i, c := range s {
+		if i > 0 && (len(s)-i)%3 == 0 {
+			result = append(result, ',')
+		}
+		result = append(result, byte(c))
+	}
+	return string(result)
+}
+
+// formatTime formats seconds into human-readable: <60→"Ns", <3600→"Nm Ns", else "Nh Nm".
+func formatTime(seconds int) string {
+	if seconds < 60 {
+		return fmt.Sprintf("%ds", seconds)
+	}
+	minutes := seconds / 60
+	secs := seconds % 60
+	if minutes < 60 {
+		if secs > 0 {
+			return fmt.Sprintf("%dm %ds", minutes, secs)
+		}
+		return fmt.Sprintf("%dm", minutes)
+	}
+	hours := minutes / 60
+	mins := minutes % 60
+	if mins > 0 {
+		return fmt.Sprintf("%dh %dm", hours, mins)
+	}
+	return fmt.Sprintf("%dh", hours)
+}
+
+// formatDate converts an ISO timestamp to "Feb 13, 2026" display format.
+func formatDate(isoDate string) string {
+	if isoDate == "" {
+		return ""
+	}
+	t, err := time.Parse(time.RFC3339Nano, strings.Replace(isoDate, "Z", "+00:00", 1))
+	if err != nil {
+		t, err = time.Parse("2006-01-02T15:04:05.999999999Z", isoDate)
+		if err != nil {
+			t, err = time.Parse(time.RFC3339, strings.Replace(isoDate, "Z", "+00:00", 1))
+			if err != nil {
+				if len(isoDate) >= 10 {
+					return isoDate[:10]
+				}
+				return isoDate
+			}
+		}
+	}
+	return t.Format("Jan 02, 2006")
+}
+
+// cleanUserTexts filters out system-injected text from user prompts.
+func cleanUserTexts(texts []string) []string {
+	skipPrefixes := []string{"[Request interrupted", "<local-command-caveat>", "<system-reminder>"}
+	var cleaned []string
+	for _, t := range texts {
+		skip := false
+		for _, prefix := range skipPrefixes {
+			if strings.HasPrefix(t, prefix) {
+				skip = true
+				break
+			}
+		}
+		if !skip {
+			cleaned = append(cleaned, t)
+		}
+	}
+	return cleaned
+}
+
+// fallbackSummary returns the first cleaned user text, truncated to 120 chars.
+func fallbackSummary(userTexts []string) string {
+	cleaned := cleanUserTexts(userTexts)
+	if len(cleaned) == 0 {
+		return "Short session"
+	}
+	fb := cleaned[0]
+	if len(fb) > 120 {
+		fb = fb[:117] + "..."
+	}
+	return fb
+}
+
+// generateSummary calls the Anthropic API to produce a 1-sentence session summary.
+// timeout controls the HTTP request timeout (shorter for live daemon, longer for sync).
+func generateSummary(userTexts []string, timeout time.Duration) string {
+	if len(userTexts) == 0 {
+		return "Empty session"
+	}
+
+	apiKey := os.Getenv("ANTHROPIC_API_KEY")
+	if apiKey == "" {
+		return fallbackSummary(userTexts)
+	}
+
+	cleaned := cleanUserTexts(userTexts)
+	if len(cleaned) == 0 {
+		return "Short session"
+	}
+
+	// Join up to 20 cleaned texts
+	limit := 20
+	if len(cleaned) < limit {
+		limit = len(cleaned)
+	}
+	context := strings.Join(cleaned[:limit], "\n---\n")
+	if len(context) > 4000 {
+		context = context[:4000] + "..."
+	}
+
+	prompt := "Below are the user prompts from a Claude Code coding session. " +
+		"Write a single sentence (max 120 characters) summarizing what the user worked on. " +
+		"Be specific and concise. Do not start with 'The user'. " +
+		"Just output the summary sentence, nothing else.\n\n" + context
+
+	body, _ := json.Marshal(map[string]interface{}{
+		"model":      "claude-haiku-4-5-20251001",
+		"max_tokens": 100,
+		"messages":   []map[string]interface{}{{"role": "user", "content": prompt}},
+	})
+
+	req, err := http.NewRequest(http.MethodPost, "https://api.anthropic.com/v1/messages", bytes.NewReader(body))
+	if err != nil {
+		return fallbackSummary(userTexts)
+	}
+	req.Header.Set("x-api-key", apiKey)
+	req.Header.Set("anthropic-version", "2023-06-01")
+	req.Header.Set("content-type", "application/json")
+
+	client := &http.Client{Timeout: timeout}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("summary API call failed: %v", err)
+		return fallbackSummary(userTexts)
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Content []struct {
+			Text string `json:"text"`
+		} `json:"content"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil || len(result.Content) == 0 {
+		return fallbackSummary(userTexts)
+	}
+
+	text := strings.TrimSpace(result.Content[0].Text)
+	if text == "" {
+		return fallbackSummary(userTexts)
+	}
+	if len(text) > 150 {
+		text = text[:147] + "..."
+	}
+	return text
 }
 
 func toInt64(v interface{}) int64 {

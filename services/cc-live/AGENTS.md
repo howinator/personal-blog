@@ -31,7 +31,7 @@ A Go binary (`~/.cc-live/cc-live-daemon`) manages multiple concurrent Claude Cod
 
 ## How It Works
 
-1. **Heartbeat API** (`POST /api/live/heartbeat`): The local daemon sends this every 30s with JSON body `{"sessions": [{session_id, total_tokens, tool_calls, user_prompts, active_time_seconds, last_prompt, project, model}, ...]}`. Authenticated via `Authorization: Bearer <key>`.
+1. **Heartbeat API** (`POST /api/live/heartbeat`): The local daemon sends this every 30s with JSON body `{"sessions": [{session_id, total_tokens, tool_calls, user_prompts, active_time_seconds, last_prompt, project, model, sensitive}, ...]}`. Authenticated via `Authorization: Bearer <key>`.
 2. **Stop API** (`POST /api/live/stop`): Sent when all sessions are unregistered for immediate deactivation.
 3. **Expiry**: Background goroutine checks every 10s. If no heartbeat in 60s, marks inactive and broadcasts.
 4. **WebSocket** (`GET /ws/live`): Browser clients connect here. Receives `{"active": true/false, "sessions": [...]}` on connect and on every state change.
@@ -55,6 +55,7 @@ A Go binary (`~/.cc-live/cc-live-daemon`) manages multiple concurrent Claude Cod
 ### Daemon
 - `CC_LIVE_ENDPOINT` — production: `http://<hosting-vm-tailscale-ip>:8080`
 - `CC_LIVE_API_KEY` — same key as the server
+- `CC_LIVE_SENSITIVE` — set to `1` to redact prompts for this session (read at `register` time)
 - Silently exits 0 if not configured, so it never blocks Claude Code.
 
 ## Local Development
@@ -87,6 +88,15 @@ make deploy-cc-live   # build + push + pulumi up
 make deploy-all       # deploy blog + cc-live together
 ```
 
+## Sensitive Sessions
+
+Start Claude Code with `CC_LIVE_SENSITIVE=1 claude` to redact prompts for that session. The live status dot, metrics (tokens, tool calls, active time), and project name all work normally — only the `last_prompt` field is replaced with deterministic random noise of the same byte length before the heartbeat is sent.
+
+- **Redaction happens in the daemon** (`scripts/cc-live/main.go`), so the real prompt never leaves the laptop.
+- **Per-session flag** stored in the `sensitive` column in SQLite, so concurrent sessions can have different sensitivity levels.
+- **Deterministic noise**: seeded from the prompt content, so the same prompt produces the same noise across ticks (avoids re-triggering the typewriter animation).
+- **Frontend**: sensitive sessions show "Latest Prompt (redacted)" label and muted/dimmed styling on the noise text.
+
 ## Multi-Session Robustness
 
 | Scenario | Behavior |
@@ -96,6 +106,7 @@ make deploy-all       # deploy blog + cc-live together
 | Laptop crashes (no clean SessionEnd) | Sessions stay in SQLite but transcripts stop updating → mtime ages past 15min → daemon sends stop |
 | Claude Code idle >15min | Transcript mtime stale → daemon marks inactive even though session is registered |
 | Daemon crashes | Next `register` (on SessionStart) detects stale PID, restarts daemon |
+| Sensitive + normal concurrent | Each session's sensitivity is stored independently; one shows real prompts, the other shows noise |
 
 ## Infrastructure
 

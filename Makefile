@@ -6,13 +6,16 @@ HOMESERVER_DIR ?= ../homeserver
 
 .PHONY: build push login deploy \
         build-cc-live push-cc-live deploy-cc-live \
-        build-daemon restart-daemon reset-daemon \
+        build-daemon restart-daemon reset-daemon sync \
         build-all push-all deploy-all \
         dev dev-down dev-heartbeat
 
 # --- Blog ---
 
-build:
+sync: build-daemon
+	$(HOME)/.cc-live/cc-live-daemon sync
+
+build: sync
 	podman build --platform linux/amd64 -f Containerfile -t $(BLOG_IMAGE):$(SHA) -t $(BLOG_IMAGE):latest .
 
 push: build

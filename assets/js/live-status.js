@@ -143,15 +143,24 @@
     if (details && session.last_prompt) {
       var promptId = 'cc-live-' + session.session_id + '-prompt';
       var promptContainer = details.querySelector('.cc-live-prompt');
+      var promptLabel = session.sensitive ? 'Latest Prompt (redacted)' : 'Latest Prompt';
       if (!promptContainer) {
         promptContainer = document.createElement('div');
         promptContainer.className = 'cc-live-prompt cc-live-injected';
-        promptContainer.innerHTML = '<span style="font-family:var(--font-mono);font-size:0.8rem;color:var(--muted)">Latest Prompt</span>';
+        promptContainer.innerHTML = '<span style="font-family:var(--font-mono);font-size:0.8rem;color:var(--muted)">' + promptLabel + '</span>';
         var promptEl = document.createElement('div');
-        promptEl.className = 'cc-typewriter';
+        promptEl.className = 'cc-typewriter' + (session.sensitive ? ' cc-typewriter-redacted' : '');
         promptEl.id = promptId;
         promptContainer.appendChild(promptEl);
         details.appendChild(promptContainer);
+      } else {
+        var labelEl = promptContainer.querySelector('span');
+        if (labelEl) labelEl.textContent = promptLabel;
+        var existingPromptEl = document.getElementById(promptId);
+        if (existingPromptEl) {
+          if (session.sensitive) existingPromptEl.classList.add('cc-typewriter-redacted');
+          else existingPromptEl.classList.remove('cc-typewriter-redacted');
+        }
       }
 
       var promptEl = document.getElementById(promptId);
@@ -196,20 +205,8 @@
       '<span class="cc-session-caret">&#9654;</span>' +
       '<span class="cc-status-dot cc-status-dot-inline active"></span>' +
       '<span class="cc-live-label">Live</span>' +
-      '<span class="cc-session-summary">' + escapeHTML(session.project || 'unknown') + '</span>' +
+      '<span class="cc-session-summary">' + escapeHTML(session.summary || session.project || 'unknown') + '</span>' +
       '<span class="cc-session-tokens">' + tokenDisplay + ' tokens</span>';
-
-    // Build details
-    var detailsHTML =
-      '<table>' +
-      '<tr><td>Model</td><td>' + escapeHTML(session.model || '') + '</td></tr>' +
-      '<tr><td>User Prompts</td><td>' + (session.user_prompts || 0) + '</td></tr>' +
-      '<tr><td>Tool Calls</td><td>' + (session.tool_calls || 0) + '</td></tr>' +
-      '<tr><td>Total Tokens</td><td>' + tokenDisplay + '</td></tr>' +
-      '<tr><td>Active Time</td><td>' + timeDisplay + '</td></tr>' +
-      '</table>' +
-      '<div style="margin-top:0.5rem"><span style="font-family:var(--font-mono);font-size:0.8rem;color:var(--muted)">Latest Prompt</span>' +
-      '<div class="cc-typewriter" id="' + cardId + '-prompt"></div></div>';
 
     var summary = card.querySelector('summary');
     if (!summary) {
@@ -224,7 +221,50 @@
       detailsDiv.className = 'cc-session-details';
       card.appendChild(detailsDiv);
     }
-    detailsDiv.innerHTML = detailsHTML;
+
+    // Update or create the stats table (without touching the prompt element)
+    var tableHTML =
+      '<table>' +
+      '<tr><td>Model</td><td>' + escapeHTML(session.model || '') + '</td></tr>' +
+      '<tr><td>User Prompts</td><td>' + (session.user_prompts || 0) + '</td></tr>' +
+      '<tr><td>Tool Calls</td><td>' + (session.tool_calls || 0) + '</td></tr>' +
+      '<tr><td>Input Tokens</td><td>' + formatTokens(session.input_tokens || 0) + '</td></tr>' +
+      '<tr><td>Output Tokens</td><td>' + formatTokens(session.output_tokens || 0) + '</td></tr>' +
+      '<tr><td>Total Tokens</td><td>' + tokenDisplay + '</td></tr>' +
+      '<tr><td>Active Time</td><td>' + timeDisplay + '</td></tr>' +
+      '</table>';
+
+    var table = detailsDiv.querySelector('table');
+    if (table) {
+      table.outerHTML = tableHTML;
+    } else {
+      detailsDiv.insertAdjacentHTML('afterbegin', tableHTML);
+    }
+
+    // Ensure prompt container exists (create once, then preserve)
+    var promptLabel = session.sensitive ? 'Latest Prompt (redacted)' : 'Latest Prompt';
+    var promptContainer = detailsDiv.querySelector('.cc-live-prompt-wrap');
+    if (!promptContainer) {
+      promptContainer = document.createElement('div');
+      promptContainer.className = 'cc-live-prompt-wrap';
+      promptContainer.style.marginTop = '0.5rem';
+      promptContainer.innerHTML =
+        '<span class="cc-live-prompt-label" style="font-family:var(--font-mono);font-size:0.8rem;color:var(--muted)">' + promptLabel + '</span>';
+      var promptEl = document.createElement('div');
+      promptEl.className = 'cc-typewriter' + (session.sensitive ? ' cc-typewriter-redacted' : '');
+      promptEl.id = cardId + '-prompt';
+      promptContainer.appendChild(promptEl);
+      detailsDiv.appendChild(promptContainer);
+    } else {
+      // Update label and redacted class
+      var labelEl = promptContainer.querySelector('.cc-live-prompt-label');
+      if (labelEl) labelEl.textContent = promptLabel;
+      var existingPromptEl = document.getElementById(cardId + '-prompt');
+      if (existingPromptEl) {
+        if (session.sensitive) existingPromptEl.classList.add('cc-typewriter-redacted');
+        else existingPromptEl.classList.remove('cc-typewriter-redacted');
+      }
+    }
 
     // Typewriter for latest prompt
     var promptEl = document.getElementById(cardId + '-prompt');

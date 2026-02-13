@@ -200,6 +200,8 @@
   50% { opacity: 0; }
 }
 
+.cc-typewriter-redacted { color: var(--muted); opacity: 0.6; }
+
 /* --- Live session card --- */
 #cc-live-sessions:not(:empty) {
   margin-bottom: 0.5rem;
