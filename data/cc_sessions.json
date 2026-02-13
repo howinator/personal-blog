@@ -38,17 +38,17 @@
       "session_id": "7c293bdc-9a9b-4875-958e-ea9b6fc3eb5e",
       "date": "2026-02-13T01:11:13.067Z",
       "date_display": "Feb 13, 2026",
-      "summary": "Planning architecture for live Claude Code session status indicator on blog using Tailscale-connected daemon, WebSocket updates, and Go sidecar.",
+      "summary": "Built a real-time Claude Code session status system with WebSocket live updates, local daemon, and Docker infrastructure for a homeserver-hosted blog.",
       "project": "personal-blog",
       "cwd": "/Users/howie/projects/personal-blog",
-      "num_user_prompts": 7,
-      "num_tool_calls": 30,
-      "total_input_tokens": 2366662,
-      "total_output_tokens": 7532,
-      "total_tokens": 2374194,
-      "total_tokens_display": "2.4M",
-      "active_time_seconds": 1030,
-      "active_time_display": "17m 10s",
+      "num_user_prompts": 18,
+      "num_tool_calls": 130,
+      "total_input_tokens": 13637708,
+      "total_output_tokens": 28350,
+      "total_tokens": 13666058,
+      "total_tokens_display": "13.7M",
+      "active_time_seconds": 6696,
+      "active_time_display": "1h 51m",
       "cc_version": "2.1.37"
     },
     {
@@ -292,10 +292,10 @@
   ],
   "totals": {
     "session_count": 17,
-    "total_tokens": 55944966,
-    "total_tokens_display": "55.9M",
-    "total_tool_calls": 603,
-    "total_active_time_seconds": 19979,
-    "total_active_time_display": "5h 32m"
+    "total_tokens": 67236830,
+    "total_tokens_display": "67.2M",
+    "total_tool_calls": 703,
+    "total_active_time_seconds": 25645,
+    "total_active_time_display": "7h 7m"
   }
 }

@@ -6,6 +6,7 @@ HOMESERVER_DIR ?= ../homeserver
 
 .PHONY: build push login deploy \
         build-cc-live push-cc-live deploy-cc-live \
+        build-daemon \
         build-all push-all deploy-all \
         dev dev-down dev-heartbeat
 
@@ -36,6 +37,12 @@ deploy-cc-live: push-cc-live
 	cd $(HOMESERVER_DIR) && \
 		pulumi config set homeserver:ccLiveTag $(SHA) && \
 		pulumi up
+
+# --- cc-live daemon (local) ---
+
+build-daemon:
+	mkdir -p $(HOME)/.cc-live
+	cd scripts/cc-live && go build -o $(HOME)/.cc-live/cc-live-daemon .
 
 # --- All ---
 

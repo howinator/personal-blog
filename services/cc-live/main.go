@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -16,12 +17,20 @@ import (
 type state struct {
 	mu            sync.RWMutex
 	active        bool
+	sessions      int
 	lastHeartbeat time.Time
 	clients       map[*websocket.Conn]struct{}
 }
 
+// message is the WebSocket payload sent to browser clients.
 type message struct {
-	Active bool `json:"active"`
+	Active   bool `json:"active"`
+	Sessions int  `json:"sessions"`
+}
+
+// heartbeatPayload is the JSON body accepted on POST /api/live/heartbeat.
+type heartbeatPayload struct {
+	Sessions int `json:"sessions"`
 }
 
 var s = &state{
@@ -43,12 +52,28 @@ func main() {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
+
+		// Parse optional JSON body for session count
+		var payload heartbeatPayload
+		if r.Body != nil {
+			body, _ := io.ReadAll(r.Body)
+			if len(body) > 0 {
+				json.Unmarshal(body, &payload)
+			}
+		}
+		if payload.Sessions < 1 {
+			payload.Sessions = 1
+		}
+
 		s.mu.Lock()
 		s.lastHeartbeat = time.Now()
 		wasActive := s.active
+		prevSessions := s.sessions
 		s.active = true
+		s.sessions = payload.Sessions
 		s.mu.Unlock()
-		if !wasActive {
+
+		if !wasActive || prevSessions != payload.Sessions {
 			broadcast()
 		}
 		w.WriteHeader(http.StatusOK)
@@ -66,6 +91,7 @@ func main() {
 		s.mu.Lock()
 		wasActive := s.active
 		s.active = false
+		s.sessions = 0
 		s.mu.Unlock()
 		if wasActive {
 			broadcast()
@@ -83,6 +109,7 @@ func main() {
 			s.mu.Lock()
 			if s.active && time.Since(s.lastHeartbeat) > 60*time.Second {
 				s.active = false
+				s.sessions = 0
 				s.mu.Unlock()
 				broadcast()
 			} else {
@@ -108,10 +135,11 @@ func wsHandler(ws *websocket.Conn) {
 	s.mu.Lock()
 	s.clients[ws] = struct{}{}
 	active := s.active
+	sessions := s.sessions
 	s.mu.Unlock()
 
 	// Send current state on connect
-	msg, _ := json.Marshal(message{Active: active})
+	msg, _ := json.Marshal(message{Active: active, Sessions: sessions})
 	websocket.Message.Send(ws, string(msg))
 
 	// Keep connection open, read to detect close
@@ -130,13 +158,14 @@ func wsHandler(ws *websocket.Conn) {
 func broadcast() {
 	s.mu.RLock()
 	active := s.active
+	sessions := s.sessions
 	clients := make([]*websocket.Conn, 0, len(s.clients))
 	for c := range s.clients {
 		clients = append(clients, c)
 	}
 	s.mu.RUnlock()
 
-	msg, _ := json.Marshal(message{Active: active})
+	msg, _ := json.Marshal(message{Active: active, Sessions: sessions})
 	for _, c := range clients {
 		if err := websocket.Message.Send(c, string(msg)); err != nil {
 			s.mu.Lock()
