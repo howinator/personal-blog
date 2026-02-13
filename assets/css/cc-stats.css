@@ -138,6 +138,88 @@
   font-style: italic;
 }
 
+/* --- Live Status Dot --- */
+.cc-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  margin-left: 0.35em;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+  transition: background 0.3s;
+}
+
+.cc-status-dot-inline {
+  margin-left: 0;
+  margin-right: 0.2em;
+  top: 0;
+}
+
+.cc-status-dot.active {
+  background: #22c55e;
+  animation: cc-pulse 2s ease-in-out infinite;
+}
+
+@keyframes cc-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* --- Slot-machine digit animation --- */
+.cc-digit {
+  display: inline-block;
+  transition: transform 300ms ease-out, opacity 300ms ease-out;
+}
+
+.cc-digit-enter {
+  transform: translateY(0.5em);
+  opacity: 0;
+}
+
+/* --- Typewriter cursor --- */
+.cc-typewriter {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-top: 0.25rem;
+  min-height: 1.2em;
+}
+
+.cc-typewriter-active::after {
+  content: '\2588';
+  animation: cc-blink 1.06s step-end infinite;
+  color: var(--accent);
+}
+
+@keyframes cc-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cc-typewriter-redacted { color: var(--muted); opacity: 0.6; }
+
+/* --- Live session card --- */
+#cc-live-sessions:not(:empty) {
+  margin-bottom: 0.5rem;
+}
+
+.cc-session-live {
+  border-color: #22c55e40;
+}
+
+.cc-live-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #22c55e;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 /* --- Responsive --- */
 @media (max-width: 600px) {
   .cc-stats-summary {

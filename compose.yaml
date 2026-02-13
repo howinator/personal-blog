@@ -1,0 +1,46 @@
+# Local development stack — mirrors production routing
+# Usage: docker compose up --build
+#
+# http://localhost:8000        → blog (nginx)
+# ws://localhost:8000/ws/live  → cc-live (WebSocket)
+# http://localhost:8000/api/live/heartbeat → cc-live (API)
+#
+# Test heartbeat:
+#   curl -X POST http://localhost:8000/api/live/heartbeat \
+#     -H "Authorization: Bearer dev-secret"
+
+services:
+  traefik:
+    image: traefik:v3.6
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "8000:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  blog:
+    build:
+      context: .
+      dockerfile: Containerfile
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.blog.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.blog.entrypoints=web"
+      - "traefik.http.services.blog.loadbalancer.server.port=80"
+
+  cc-live:
+    build:
+      context: ./services/cc-live
+      dockerfile: Containerfile
+    environment:
+      - CC_LIVE_API_KEY=dev-secret
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cc-live-ws.rule=PathPrefix(`/ws/live`)"
+      - "traefik.http.routers.cc-live-ws.entrypoints=web"
+      - "traefik.http.routers.cc-live-api.rule=PathPrefix(`/api/live`)"
+      - "traefik.http.routers.cc-live-api.entrypoints=web"
+      - "traefik.http.services.cc-live.loadbalancer.server.port=8080"

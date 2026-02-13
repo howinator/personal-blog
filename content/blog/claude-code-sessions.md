@@ -1,7 +1,7 @@
 ---
 title: "Claude Code Session Log"
 date: 2026-02-12T10:00:00-06:00
-draft: false
+draft: true
 slug: "claude-code-sessions"
 categories: ['meta', 'ai']
 tags: ['claude-code', 'ai', 'meta']
