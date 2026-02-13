@@ -34,6 +34,11 @@ enableEmoji = true
     identifier = "blog"
     url = "/blog/"
   [[menu.main]]
+    name = "claude log"
+    identifier = "claude-log"
+    weight = 200
+    url = "/claude-log/"
+  [[menu.main]]
     name = "resume"
     identifier = "resume"
     weight = 300

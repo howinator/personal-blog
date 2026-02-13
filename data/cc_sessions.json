@@ -1,6 +1,57 @@
 {
   "sessions": [
     {
+      "session_id": "ae1dbecd-93bf-4019-984a-a875e4b01485",
+      "date": "2026-02-13T01:36:38.749Z",
+      "date_display": "Feb 13, 2026",
+      "summary": "Changed directory to the content folder within the project structure.",
+      "project": "personal-blog",
+      "cwd": "/Users/howie/projects/personal-blog",
+      "num_user_prompts": 1,
+      "num_tool_calls": 1,
+      "total_input_tokens": 40002,
+      "total_output_tokens": 28,
+      "total_tokens": 40030,
+      "total_tokens_display": "40.0k",
+      "active_time_seconds": 6,
+      "active_time_display": "6s",
+      "cc_version": "2.1.37"
+    },
+    {
+      "session_id": "b7c1654f-d2d3-4d73-9deb-cd9711300911",
+      "date": "2026-02-13T01:22:37.867Z",
+      "date_display": "Feb 13, 2026",
+      "summary": "Built a real-time Claude Code session status indicator with Go WebSocket service, bash daemon heartbeats, and frontend presence dot.",
+      "project": "personal-blog",
+      "cwd": "/Users/howie/projects/personal-blog",
+      "num_user_prompts": 2,
+      "num_tool_calls": 30,
+      "total_input_tokens": 1061547,
+      "total_output_tokens": 245,
+      "total_tokens": 1061792,
+      "total_tokens_display": "1.1M",
+      "active_time_seconds": 337,
+      "active_time_display": "5m 37s",
+      "cc_version": "2.1.37"
+    },
+    {
+      "session_id": "7c293bdc-9a9b-4875-958e-ea9b6fc3eb5e",
+      "date": "2026-02-13T01:11:13.067Z",
+      "date_display": "Feb 13, 2026",
+      "summary": "Planning architecture for live Claude Code session status indicator on blog using Tailscale-connected daemon, WebSocket updates, and Go sidecar.",
+      "project": "personal-blog",
+      "cwd": "/Users/howie/projects/personal-blog",
+      "num_user_prompts": 7,
+      "num_tool_calls": 30,
+      "total_input_tokens": 2366662,
+      "total_output_tokens": 7532,
+      "total_tokens": 2374194,
+      "total_tokens_display": "2.4M",
+      "active_time_seconds": 1030,
+      "active_time_display": "17m 10s",
+      "cc_version": "2.1.37"
+    },
+    {
       "session_id": "c00494da-631d-4021-b646-7753d12f4ff5",
       "date": "2026-02-12T17:15:22.907Z",
       "date_display": "Feb 12, 2026",
@@ -38,7 +89,7 @@
       "session_id": "8f47f3d3-2717-477c-8567-4439c2d13657",
       "date": "2026-02-12T05:06:25.063Z",
       "date_display": "Feb 12, 2026",
-      "summary": "Added section headings to blog post with styled headers featuring animated doug tree icons that extend beyond the container with customized hover a...",
+      "summary": "Added section headings to blog post with themed styling, integrated animated doug tree into headers with customized hover effects and adjusted padd...",
       "project": "personal-blog",
       "cwd": "/Users/howie/projects/personal-blog",
       "num_user_prompts": 16,
@@ -240,11 +291,11 @@
     }
   ],
   "totals": {
-    "session_count": 14,
-    "total_tokens": 52468950,
-    "total_tokens_display": "52.5M",
-    "total_tool_calls": 542,
-    "total_active_time_seconds": 18606,
-    "total_active_time_display": "5h 10m"
+    "session_count": 17,
+    "total_tokens": 55944966,
+    "total_tokens_display": "55.9M",
+    "total_tool_calls": 603,
+    "total_active_time_seconds": 19979,
+    "total_active_time_display": "5h 32m"
   }
 }

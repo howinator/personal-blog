@@ -12,6 +12,8 @@
 {{ $ccstats := resources.Get "css/cc-stats.css" }}
 {{ $css := slice $main $redacted $ccstats | resources.Concat "css/bundle.css" | minify | fingerprint }}
 <link rel="stylesheet" href="{{ $css.RelPermalink }}">
+{{ $liveJs := resources.Get "js/live-status.js" | minify | fingerprint }}
+<script defer src="{{ $liveJs.RelPermalink }}"></script>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-056VXB4GQS"></script>
 <script>

@@ -138,6 +138,36 @@
   font-style: italic;
 }
 
+/* --- Live Status Dot --- */
+.cc-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  margin-left: 0.35em;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+  transition: background 0.3s;
+}
+
+.cc-status-dot-inline {
+  margin-left: 0;
+  margin-right: 0.2em;
+  top: 0;
+}
+
+.cc-status-dot.active {
+  background: #22c55e;
+  animation: cc-pulse 2s ease-in-out infinite;
+}
+
+@keyframes cc-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 /* --- Responsive --- */
 @media (max-width: 600px) {
   .cc-stats-summary {
