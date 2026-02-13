@@ -168,6 +168,9 @@
         if (lastPromptSeen[session.session_id] !== session.last_prompt) {
           lastPromptSeen[session.session_id] = session.last_prompt;
           typewriterAnimate(promptEl, session.last_prompt);
+        } else if (promptEl.textContent !== session.last_prompt) {
+          // Element was recreated (e.g. after reconnect) — set text without animation
+          promptEl.textContent = session.last_prompt;
         }
       }
     }
@@ -272,6 +275,9 @@
       if (lastPromptSeen[session.session_id] !== session.last_prompt) {
         lastPromptSeen[session.session_id] = session.last_prompt;
         typewriterAnimate(promptEl, session.last_prompt);
+      } else if (promptEl.textContent !== session.last_prompt) {
+        // Element was recreated (e.g. after reconnect) — set text without animation
+        promptEl.textContent = session.last_prompt;
       }
     }
   }
@@ -318,7 +324,7 @@
   }
 
   function removeLiveSession(sessionId) {
-    delete lastPromptSeen[sessionId];
+    // Keep lastPromptSeen so reconnects don't re-trigger the typewriter
 
     // Clean up typewriter timer
     var timerId = 'cc-live-' + sessionId + '-prompt';

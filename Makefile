@@ -54,7 +54,7 @@ restart-daemon: build-daemon
 reset-daemon: build-daemon
 	-kill $$(cat $(HOME)/.cc-live/daemon.pid 2>/dev/null) 2>/dev/null
 	-rm -f $(HOME)/.cc-live/daemon.pid
-	rm -f $(HOME)/.cc-live/state.db
+	rm -f $(HOME)/.cc-live/state.db $(HOME)/.cc-live/state.db-shm $(HOME)/.cc-live/state.db-wal
 	-mv $(HOME)/.cc-live/daemon.log $(HOME)/.cc-live/daemon.log.$$(date +%Y%m%d-%H%M%S)
 
 # --- All ---

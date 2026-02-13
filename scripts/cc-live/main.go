@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	gosync "sync"
 	"syscall"
 	"time"
 
@@ -146,8 +147,11 @@ func openDB() *sql.DB {
 				active_time_seconds INTEGER NOT NULL DEFAULT 0,
 				cc_version TEXT NOT NULL DEFAULT '',
 				sensitive INTEGER NOT NULL DEFAULT 0,
+				file_size INTEGER NOT NULL DEFAULT 0,
 				updated_at TEXT NOT NULL DEFAULT ''
 			)`)
+			// Migration: add file_size column
+			db.Exec(`ALTER TABLE session_stats ADD COLUMN file_size INTEGER NOT NULL DEFAULT 0`)
 			return db
 		}
 		time.Sleep(200 * time.Millisecond)
@@ -238,7 +242,19 @@ func cmdUnregister() {
 // processTranscript parses a transcript file and upserts metrics into session_stats.
 // overrides supply values from the hook payload that may not yet be in the transcript.
 // Returns the parsed tracker for further use (e.g. summary generation), or nil if skipped.
-func processTranscript(db *sql.DB, transcriptPath string, overrides *transcriptOverrides) (*fileTracker, error) {
+// parsedSession holds transcript data resolved and ready for DB upsert.
+type parsedSession struct {
+	tracker        *fileTracker
+	sessionID      string
+	transcriptPath string
+	cwd            string
+	project        string
+	model          string
+	sensitiveInt   int
+}
+
+// parseTranscriptData parses a transcript and resolves metadata without touching the DB.
+func parseTranscriptData(transcriptPath string, overrides *transcriptOverrides) *parsedSession {
 	tracker := &fileTracker{}
 	parseTranscriptIncremental(transcriptPath, tracker)
 
@@ -265,12 +281,12 @@ func processTranscript(db *sql.DB, transcriptPath string, overrides *transcriptO
 	}
 
 	if sessionID == "" {
-		return nil, fmt.Errorf("no session_id for %s", transcriptPath)
+		return nil
 	}
 
-	// Skip empty transcripts
-	if tracker.metrics.UserPrompts == 0 && tracker.metrics.TotalTokens == 0 {
-		return nil, nil
+	// Skip empty transcripts (no tokens = no real conversation)
+	if tracker.metrics.TotalTokens == 0 {
+		return nil
 	}
 
 	project := filepath.Base(cwd)
@@ -283,7 +299,19 @@ func processTranscript(db *sql.DB, transcriptPath string, overrides *transcriptO
 		sensitiveInt = 1
 	}
 
-	// Upsert into session_stats, preserving existing non-empty summary
+	return &parsedSession{
+		tracker:        tracker,
+		sessionID:      sessionID,
+		transcriptPath: transcriptPath,
+		cwd:            cwd,
+		project:        project,
+		model:          model,
+		sensitiveInt:   sensitiveInt,
+	}
+}
+
+// upsertSessionStats writes a parsed session to the DB, preserving existing non-empty summary.
+func upsertSessionStats(db *sql.DB, s *parsedSession) error {
 	_, err := db.Exec(`INSERT INTO session_stats
 		(session_id, transcript_path, cwd, project, model, date, summary,
 		 num_user_prompts, num_tool_calls, total_input_tokens, total_output_tokens,
@@ -307,18 +335,26 @@ func processTranscript(db *sql.DB, transcriptPath string, overrides *transcriptO
 		 cc_version = CASE WHEN excluded.cc_version != '' THEN excluded.cc_version ELSE session_stats.cc_version END,
 		 sensitive = excluded.sensitive,
 		 updated_at = excluded.updated_at`,
-		sessionID, transcriptPath, cwd, project, model, tracker.firstTimestamp,
-		tracker.metrics.UserPrompts, tracker.metrics.ToolCalls,
-		tracker.metrics.InputTokens, tracker.metrics.OutputTokens,
-		tracker.metrics.TotalTokens, tracker.metrics.ActiveTime,
-		tracker.transcriptVersion, sensitiveInt,
+		s.sessionID, s.transcriptPath, s.cwd, s.project, s.model,
+		s.tracker.firstTimestamp,
+		s.tracker.metrics.UserPrompts, s.tracker.metrics.ToolCalls,
+		s.tracker.metrics.InputTokens, s.tracker.metrics.OutputTokens,
+		s.tracker.metrics.TotalTokens, s.tracker.metrics.ActiveTime,
+		s.tracker.transcriptVersion, s.sensitiveInt,
 		time.Now().UTC().Format(time.RFC3339),
 	)
-	if err != nil {
-		return tracker, fmt.Errorf("upserting session_stats: %w", err)
-	}
+	return err
+}
 
-	return tracker, nil
+func processTranscript(db *sql.DB, transcriptPath string, overrides *transcriptOverrides) (*fileTracker, error) {
+	s := parseTranscriptData(transcriptPath, overrides)
+	if s == nil {
+		return nil, nil
+	}
+	if err := upsertSessionStats(db, s); err != nil {
+		return s.tracker, fmt.Errorf("upserting session_stats: %w", err)
+	}
+	return s.tracker, nil
 }
 
 func isDaemonRunning() bool {
@@ -397,59 +433,142 @@ func cmdSync() {
 	transcripts := discoverTranscripts()
 	log.Printf("sync: discovered %d transcripts", len(transcripts))
 
-	// Process all transcripts — collect userTexts for summary generation
+	// Build map of existing file sizes for skip-if-unchanged optimization
+	existingSizes := make(map[string]int64) // transcript_path → file_size
+	rows, err := db.Query(`SELECT transcript_path, file_size FROM session_stats WHERE file_size > 0`)
+	if err == nil {
+		for rows.Next() {
+			var path string
+			var size int64
+			rows.Scan(&path, &size)
+			existingSizes[path] = size
+		}
+		rows.Close()
+	}
+
+	// Filter to only files that need parsing
+	type parseJob struct {
+		path string
+		size int64
+	}
+	var toParse []parseJob
+	skipped := 0
+	for _, path := range transcripts {
+		info, err := os.Stat(path)
+		if err != nil {
+			continue
+		}
+		if prevSize, ok := existingSizes[path]; ok && info.Size() == prevSize {
+			skipped++
+			continue
+		}
+		toParse = append(toParse, parseJob{path, info.Size()})
+	}
+
+	// Phase 1: Parse files concurrently (no DB writes)
+	type parseResult struct {
+		session *parsedSession
+		size    int64
+	}
+	var mu gosync.Mutex
+	var parsed []parseResult
+	var wg gosync.WaitGroup
+	sem := make(chan struct{}, 8) // max 8 concurrent file parses
+
+	for _, job := range toParse {
+		wg.Add(1)
+		go func(j parseJob) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			s := parseTranscriptData(j.path, nil)
+			if s == nil {
+				return
+			}
+
+			mu.Lock()
+			parsed = append(parsed, parseResult{s, j.size})
+			mu.Unlock()
+		}(job)
+	}
+	wg.Wait()
+
+	// Phase 2: Write to DB serially
 	type trackerInfo struct {
 		sessionID string
 		userTexts []string
 	}
 	var needsSummary []trackerInfo
-
-	for _, path := range transcripts {
-		tracker, err := processTranscript(db, path, nil)
-		if err != nil {
-			log.Printf("sync: processing %s: %v", path, err)
+	for _, r := range parsed {
+		if err := upsertSessionStats(db, r.session); err != nil {
+			log.Printf("sync: upserting %s: %v", r.session.sessionID, err)
 			continue
 		}
-		if tracker == nil {
-			continue
-		}
-		// Check if this session needs a summary
-		sid := tracker.transcriptSessionID
-		if sid == "" {
-			sid = strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
-		}
+		db.Exec(`UPDATE session_stats SET file_size = ? WHERE session_id = ?`,
+			r.size, r.session.sessionID)
 		needsSummary = append(needsSummary, trackerInfo{
-			sessionID: sid,
-			userTexts: tracker.userTexts,
+			sessionID: r.session.sessionID,
+			userTexts: r.session.tracker.userTexts,
 		})
 	}
+	log.Printf("sync: parsed %d, skipped %d unchanged", len(toParse), skipped)
 
-	// Generate missing summaries
-	generated := 0
+	// Filter to only sessions actually needing summaries
+	type summaryJob struct {
+		sessionID string
+		userTexts []string
+	}
+	var jobs []summaryJob
 	for _, info := range needsSummary {
 		var existing string
 		var sensitive int
 		err := db.QueryRow(`SELECT summary, sensitive FROM session_stats WHERE session_id = ?`, info.sessionID).Scan(&existing, &sensitive)
-		if err != nil {
+		if err != nil || existing != "" || sensitive == 1 {
 			continue
 		}
-		if existing != "" {
-			continue // already has a summary
-		}
-		if sensitive == 1 {
-			continue // don't generate for sensitive sessions
-		}
-		summary := generateSummary(info.userTexts, 30*time.Second)
-		db.Exec(`UPDATE session_stats SET summary = ? WHERE session_id = ?`, summary, info.sessionID)
-		generated++
+		jobs = append(jobs, summaryJob(info))
 	}
-	log.Printf("sync: generated %d summaries", generated)
+
+	if len(jobs) > 0 {
+		log.Printf("sync: generating %d summaries (parallel)", len(jobs))
+
+		// Parallel summary generation with bounded concurrency
+		type summaryResult struct {
+			sessionID string
+			summary   string
+		}
+		results := make(chan summaryResult, len(jobs))
+		sem := make(chan struct{}, 5) // max 5 concurrent API calls
+
+		for _, job := range jobs {
+			sem <- struct{}{}
+			go func(j summaryJob) {
+				defer func() { <-sem }()
+				s := generateSummary(j.userTexts, 30*time.Second)
+				results <- summaryResult{j.sessionID, s}
+			}(job)
+		}
+
+		// Collect results
+		generated := 0
+		for range len(jobs) {
+			r := <-results
+			db.Exec(`UPDATE session_stats SET summary = ? WHERE session_id = ?`, r.summary, r.sessionID)
+			generated++
+		}
+		log.Printf("sync: generated %d summaries", generated)
+	}
 
 	// Export to JSON
 	exportSessionsJSON(db)
 }
 
-// discoverTranscripts walks ~/.claude/projects/ for transcript JSONL files.
+// syncMinDate is the earliest transcript modification time to include in sync.
+var syncMinDate = time.Date(2026, 2, 7, 0, 0, 0, 0, time.UTC)
+
+// discoverTranscripts walks ~/.claude/projects/ for transcript JSONL files
+// modified on or after syncMinDate.
 func discoverTranscripts() []string {
 	claudeDir := filepath.Join(os.Getenv("HOME"), ".claude", "projects")
 	var paths []string
@@ -463,6 +582,9 @@ func discoverTranscripts() []string {
 			return filepath.SkipDir
 		}
 		if !info.IsDir() && strings.HasSuffix(info.Name(), ".jsonl") {
+			if info.ModTime().Before(syncMinDate) {
+				return nil // skip old transcripts
+			}
 			paths = append(paths, path)
 		}
 		return nil
@@ -484,8 +606,9 @@ type sessionExport struct {
 	TotalInputTokens int64  `json:"total_input_tokens"`
 	TotalOutputTokens int64 `json:"total_output_tokens"`
 	TotalTokens      int64  `json:"total_tokens"`
-	TotalTokensDisplay string `json:"total_tokens_display"`
-	ActiveTimeSeconds int   `json:"active_time_seconds"`
+	TotalTokensDisplay      string `json:"total_tokens_display"`
+	TotalTokensDisplayShort string `json:"total_tokens_display_short"`
+	ActiveTimeSeconds       int    `json:"active_time_seconds"`
 	ActiveTimeDisplay string `json:"active_time_display"`
 	CcVersion        string `json:"cc_version"`
 }
@@ -493,8 +616,9 @@ type sessionExport struct {
 type totalsExport struct {
 	SessionCount          int    `json:"session_count"`
 	TotalTokens           int64  `json:"total_tokens"`
-	TotalTokensDisplay    string `json:"total_tokens_display"`
-	TotalToolCalls        int    `json:"total_tool_calls"`
+	TotalTokensDisplay      string `json:"total_tokens_display"`
+	TotalTokensDisplayShort string `json:"total_tokens_display_short"`
+	TotalToolCalls          int    `json:"total_tool_calls"`
 	TotalActiveTimeSeconds int   `json:"total_active_time_seconds"`
 	TotalActiveTimeDisplay string `json:"total_active_time_display"`
 }
@@ -508,7 +632,9 @@ func exportSessionsJSON(db *sql.DB) {
 	rows, err := db.Query(`SELECT session_id, date, summary, project, cwd,
 		num_user_prompts, num_tool_calls, total_input_tokens, total_output_tokens,
 		total_tokens, active_time_seconds, cc_version
-		FROM session_stats ORDER BY date DESC`)
+		FROM session_stats
+		WHERE total_tokens > 0 AND date >= ?
+		ORDER BY date DESC`, "2026-02-07")
 	if err != nil {
 		log.Fatalf("querying session_stats for export: %v", err)
 	}
@@ -529,6 +655,7 @@ func exportSessionsJSON(db *sql.DB) {
 		}
 		s.DateDisplay = formatDate(s.Date)
 		s.TotalTokensDisplay = formatTokens(s.TotalTokens)
+		s.TotalTokensDisplayShort = formatTokensShort(s.TotalTokens)
 		s.ActiveTimeDisplay = formatTime(s.ActiveTimeSeconds)
 		sessions = append(sessions, s)
 
@@ -542,8 +669,9 @@ func exportSessionsJSON(db *sql.DB) {
 		Totals: totalsExport{
 			SessionCount:          len(sessions),
 			TotalTokens:           totalTokens,
-			TotalTokensDisplay:    formatTokens(totalTokens),
-			TotalToolCalls:        totalToolCalls,
+			TotalTokensDisplay:      formatTokens(totalTokens),
+			TotalTokensDisplayShort: formatTokensShort(totalTokens),
+			TotalToolCalls:          totalToolCalls,
 			TotalActiveTimeSeconds: totalActiveTime,
 			TotalActiveTimeDisplay: formatTime(totalActiveTime),
 		},
@@ -814,8 +942,8 @@ func parseTranscriptIncremental(path string, tracker *fileTracker) {
 	}
 
 	scanner := bufio.NewScanner(f)
-	// Increase buffer size for large JSONL lines
-	scanner.Buffer(make([]byte, 0, 256*1024), 1024*1024)
+	// Increase buffer size for large JSONL lines (some entries with tool results can be >1MB)
+	scanner.Buffer(make([]byte, 0, 256*1024), 32*1024*1024)
 
 	var bytesRead int64
 	for scanner.Scan() {
@@ -1032,6 +1160,17 @@ func redactPrompt(prompt string) string {
 		buf.WriteString(sentence())
 	}
 	return buf.String()[:len(prompt)]
+}
+
+// formatTokensShort formats a token count for card headers: ≥1M → "1.2M", ≥1k → "123.4k", else number.
+func formatTokensShort(n int64) string {
+	if n >= 1_000_000 {
+		return fmt.Sprintf("%.1fM", float64(n)/1_000_000)
+	}
+	if n >= 1_000 {
+		return fmt.Sprintf("%.1fk", float64(n)/1_000)
+	}
+	return strconv.FormatInt(n, 10)
 }
 
 // formatTokens formats a token count: ≥10M → "12.3M", else full number with commas.
