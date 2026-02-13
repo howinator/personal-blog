@@ -734,7 +734,7 @@ func cmdServe() {
 	wasActive := false
 	emptyTicks := 0
 	const maxEmptyMinutes = 30
-	const tickInterval = 30 * time.Second
+	const tickInterval = 5 * time.Second
 	const activityTimeout = 15 * time.Minute
 
 	ticker := time.NewTicker(tickInterval)
