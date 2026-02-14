@@ -7,6 +7,23 @@ on:
     branches: [main]
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      integration: ${{ steps.filter.outputs.integration }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            integration:
+              - 'services/cc-live/**'
+              - 'scripts/cc-live/**'
+              - 'assets/js/**'
+              - 'tests/integration/**'
+              - 'compose.test.yaml'
+
   lint-go:
     runs-on: ubuntu-latest
     strategy:
@@ -47,7 +64,8 @@ jobs:
 
   integration:
     runs-on: ubuntu-latest
-    needs: [test-go]
+    needs: [changes, test-go]
+    if: needs.changes.outputs.integration == 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
