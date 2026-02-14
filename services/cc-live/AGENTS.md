@@ -74,7 +74,7 @@ make build-daemon
 echo '{"session_id":"s1","cwd":"/tmp"}' | CC_LIVE_ENDPOINT=http://localhost:8080 CC_LIVE_API_KEY=dev ~/.cc-live/cc-live-daemon register
 
 # Test WebSocket (requires websocat or browser devtools)
-websocat ws://localhost:8000/ws/live
+websocat ws://localhost:8004/ws/live
 ```
 
 ## Build & Deploy

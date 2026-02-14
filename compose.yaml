@@ -1,12 +1,12 @@
 # Local development stack — mirrors production routing
 # Usage: docker compose up --build
 #
-# http://localhost:8000        → blog (nginx)
-# ws://localhost:8000/ws/live  → cc-live (WebSocket)
-# http://localhost:8000/api/live/heartbeat → cc-live (API)
+# http://localhost:8004        → blog (nginx)
+# ws://localhost:8004/ws/live  → cc-live (WebSocket)
+# http://localhost:8004/api/live/heartbeat → cc-live (API)
 #
 # Test heartbeat:
-#   curl -X POST http://localhost:8000/api/live/heartbeat \
+#   curl -X POST http://localhost:8004/api/live/heartbeat \
 #     -H "Authorization: Bearer dev-secret"
 
 services:
@@ -17,7 +17,7 @@ services:
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
     ports:
-      - "8000:80"
+      - "8004:80"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
