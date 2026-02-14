@@ -167,7 +167,7 @@ func wsHandler(ws *websocket.Conn, st *state) {
 	go func() {
 		for msg := range c.send {
 			if err := websocket.Message.Send(c.conn, msg); err != nil {
-				c.conn.Close()
+				_ = c.conn.Close()
 				return
 			}
 		}

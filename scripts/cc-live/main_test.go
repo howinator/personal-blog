@@ -222,8 +222,8 @@ func TestProcessEntry_AssistantTokens(t *testing.T) {
 			"usage": map[string]interface{}{
 				"input_tokens":                float64(100),
 				"output_tokens":               float64(50),
-				"cache_creation_input_tokens":  float64(20),
-				"cache_read_input_tokens":      float64(10),
+				"cache_creation_input_tokens": float64(20),
+				"cache_read_input_tokens":     float64(10),
 			},
 		},
 		"timestamp": "2026-02-10T14:00:30-06:00",
@@ -357,7 +357,7 @@ func TestParseTranscriptIncremental_Offset(t *testing.T) {
 	line1 := `{"type":"user","message":{"role":"user","content":"first prompt"},"timestamp":"2026-02-10T14:00:00-06:00"}`
 	line2 := `{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"ok"}],"usage":{"input_tokens":10,"output_tokens":5}},"timestamp":"2026-02-10T14:00:10-06:00"}`
 
-	os.WriteFile(path, []byte(line1+"\n"+line2+"\n"), 0o644)
+	_ = os.WriteFile(path, []byte(line1+"\n"+line2+"\n"), 0o644)
 
 	tracker := &fileTracker{}
 	parseTranscriptIncremental(path, tracker)
@@ -373,8 +373,8 @@ func TestParseTranscriptIncremental_Offset(t *testing.T) {
 	// Append more lines
 	line3 := `{"type":"user","message":{"role":"user","content":"second prompt"},"timestamp":"2026-02-10T14:01:00-06:00"}`
 	f, _ := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0o644)
-	f.WriteString(line3 + "\n")
-	f.Close()
+	_, _ = f.WriteString(line3 + "\n")
+	_ = f.Close()
 
 	// Re-parse — should only process new lines
 	parseTranscriptIncremental(path, tracker)
@@ -490,7 +490,7 @@ func TestUpsertSessionStats_PreservesSummary(t *testing.T) {
 
 	var summary string
 	var tokens int64
-	db.QueryRow(`SELECT summary, total_tokens FROM session_stats WHERE session_id = ?`, "test-1").
+	_ = db.QueryRow(`SELECT summary, total_tokens FROM session_stats WHERE session_id = ?`, "test-1").
 		Scan(&summary, &tokens)
 	if summary != "existing summary" {
 		t.Errorf("summary = %q, want %q", summary, "existing summary")
@@ -505,7 +505,7 @@ func TestExportSessionsJSON(t *testing.T) {
 	defer db.Close()
 
 	// Insert test data
-	db.Exec(`INSERT INTO session_stats
+	_, _ = db.Exec(`INSERT INTO session_stats
 		(session_id, date, summary, project, cwd, num_user_prompts, num_tool_calls,
 		 total_input_tokens, total_output_tokens, total_tokens, active_time_seconds, cc_version, updated_at)
 		VALUES ('s1', '2026-02-10T14:00:00-06:00', 'Test session', 'myproj', '/home/user/myproj',
@@ -515,7 +515,7 @@ func TestExportSessionsJSON(t *testing.T) {
 	// Set blog root to temp dir
 	dir := t.TempDir()
 	t.Setenv("CC_STATS_BLOG_ROOT", dir)
-	os.MkdirAll(filepath.Join(dir, "data"), 0o755)
+	_ = os.MkdirAll(filepath.Join(dir, "data"), 0o755)
 
 	exportSessionsJSON(db)
 
