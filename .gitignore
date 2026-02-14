@@ -1,4 +1,5 @@
 .DS_Store
 public/
 scripts/cc-live/cc-live
+services/cc-live/cc-live
 .playwright-cli/
