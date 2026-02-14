@@ -866,13 +866,16 @@ func checkSessions(db *sql.DB, timeout time.Duration, trackers map[string]*fileT
 			continue
 		}
 
-		// Generate summary after first full turn (user prompt + assistant response)
+		// Generate summary after first full turn (user prompt + assistant response).
+		// Skip if all user texts so far are commands — wait for a real prompt.
 		if tracker.metrics.UserPrompts >= 1 && tracker.hasAssistantResponse && !tracker.summaryGenerated {
-			if !isSensitive {
+			if isSensitive {
+				tracker.summaryGenerated = true // skip for sensitive
+			} else if len(cleanUserTexts(tracker.userTexts)) > 0 {
 				summary := generateSummary(tracker.userTexts, 10*time.Second)
 				tracker.metrics.Summary = summary
+				tracker.summaryGenerated = true
 			}
-			tracker.summaryGenerated = true // don't retry (also skips for sensitive)
 		}
 
 		// Persist metrics to session_stats on each tick
@@ -1238,7 +1241,7 @@ func formatDate(isoDate string) string {
 
 // cleanUserTexts filters out system-injected text from user prompts.
 func cleanUserTexts(texts []string) []string {
-	skipPrefixes := []string{"[Request interrupted", "<local-command-caveat>", "<system-reminder>"}
+	skipPrefixes := []string{"[Request interrupted", "<local-command-caveat>", "<system-reminder>", "<command-name>"}
 	var cleaned []string
 	for _, t := range texts {
 		skip := false
