@@ -8,7 +8,8 @@ HOMESERVER_DIR ?= ../homeserver
         build-cc-live push-cc-live deploy-cc-live \
         build-daemon restart-daemon reset-daemon sync \
         build-all push-all deploy-all \
-        dev dev-down dev-heartbeat
+        dev dev-down dev-heartbeat \
+        sync-plots
 
 # --- Blog ---
 
@@ -83,3 +84,8 @@ dev-down:
 dev-heartbeat:
 	curl -sf -X POST http://localhost:8004/api/live/heartbeat \
 		-H "Authorization: Bearer dev-secret"
+
+# --- Plots ---
+
+sync-plots:
+	uv sync --project scripts/plots
