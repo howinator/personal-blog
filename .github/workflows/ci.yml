@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-go:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: [services/cc-live, scripts/cc-live]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{ matrix.module }}/go.mod
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: ${{ matrix.module }}
+
+  test-go:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: [services/cc-live, scripts/cc-live]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{ matrix.module }}/go.mod
+      - run: go test -race -v -coverprofile=coverage.out ./...
+        working-directory: ${{ matrix.module }}
+
+  test-js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm test
+
+  integration:
+    runs-on: ubuntu-latest
+    needs: [test-go]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: tests/integration/go.mod
+      - run: docker compose -f compose.test.yaml up -d --build --wait
+      - run: go test -race -v ./...
+        working-directory: tests/integration
+        env:
+          CC_LIVE_TEST_URL: http://localhost:18080
+          CC_LIVE_TEST_API_KEY: test-secret
+      - if: always()
+        run: docker compose -f compose.test.yaml down

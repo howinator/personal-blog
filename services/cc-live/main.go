@@ -61,13 +61,9 @@ var s = &state{
 	clients: make(map[*client]struct{}),
 }
 
-func main() {
-	apiKey := os.Getenv("CC_LIVE_API_KEY")
-	if apiKey == "" {
-		log.Fatal("CC_LIVE_API_KEY must be set")
-	}
-
-	http.HandleFunc("/api/live/heartbeat", func(w http.ResponseWriter, r *http.Request) {
+// heartbeatHandler returns an http.HandlerFunc that accepts heartbeat POSTs.
+func heartbeatHandler(apiKey string, st *state) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
@@ -81,21 +77,24 @@ func main() {
 		if r.Body != nil {
 			body, _ := io.ReadAll(r.Body)
 			if len(body) > 0 {
-				json.Unmarshal(body, &payload)
+				_ = json.Unmarshal(body, &payload)
 			}
 		}
 
-		s.mu.Lock()
-		s.lastHeartbeat = time.Now()
-		s.active = true
-		s.sessions = payload.Sessions
-		s.mu.Unlock()
+		st.mu.Lock()
+		st.lastHeartbeat = time.Now()
+		st.active = true
+		st.sessions = payload.Sessions
+		st.mu.Unlock()
 
-		broadcast()
+		broadcastState(st)
 		w.WriteHeader(http.StatusOK)
-	})
+	}
+}
 
-	http.HandleFunc("/api/live/stop", func(w http.ResponseWriter, r *http.Request) {
+// stopHandler returns an http.HandlerFunc that stops the active session.
+func stopHandler(apiKey string, st *state) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
@@ -104,18 +103,29 @@ func main() {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
-		s.mu.Lock()
-		wasActive := s.active
-		s.active = false
-		s.sessions = nil
-		s.mu.Unlock()
+		st.mu.Lock()
+		wasActive := st.active
+		st.active = false
+		st.sessions = nil
+		st.mu.Unlock()
 		if wasActive {
-			broadcast()
+			broadcastState(st)
 		}
 		w.WriteHeader(http.StatusOK)
-	})
+	}
+}
 
-	http.Handle("/ws/live", websocket.Handler(wsHandler))
+func main() {
+	apiKey := os.Getenv("CC_LIVE_API_KEY")
+	if apiKey == "" {
+		log.Fatal("CC_LIVE_API_KEY must be set")
+	}
+
+	http.HandleFunc("/api/live/heartbeat", heartbeatHandler(apiKey, s))
+	http.HandleFunc("/api/live/stop", stopHandler(apiKey, s))
+	http.Handle("/ws/live", websocket.Handler(func(ws *websocket.Conn) {
+		wsHandler(ws, s)
+	}))
 
 	// Background goroutine: mark inactive if no heartbeat in 60s
 	go func() {
@@ -127,7 +137,7 @@ func main() {
 				s.active = false
 				s.sessions = nil
 				s.mu.Unlock()
-				broadcast()
+				broadcastState(s)
 			} else {
 				s.mu.Unlock()
 			}
@@ -147,7 +157,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func wsHandler(ws *websocket.Conn) {
+func wsHandler(ws *websocket.Conn, st *state) {
 	c := &client{
 		conn: ws,
 		send: make(chan string, 16),
@@ -165,10 +175,10 @@ func wsHandler(ws *websocket.Conn) {
 
 	// Register client and enqueue initial state atomically — the writer
 	// goroutine will send it before any broadcast messages.
-	s.mu.Lock()
-	s.clients[c] = struct{}{}
-	msg, _ := json.Marshal(message{Active: s.active, Sessions: s.sessions})
-	s.mu.Unlock()
+	st.mu.Lock()
+	st.clients[c] = struct{}{}
+	msg, _ := json.Marshal(message{Active: st.active, Sessions: st.sessions})
+	st.mu.Unlock()
 
 	c.send <- string(msg)
 
@@ -180,26 +190,26 @@ func wsHandler(ws *websocket.Conn) {
 		}
 	}
 
-	removeClient(c)
+	removeClient(c, st)
 }
 
 // removeClient unregisters a client and closes its send channel exactly once.
-func removeClient(c *client) {
-	s.mu.Lock()
-	delete(s.clients, c)
-	s.mu.Unlock()
+func removeClient(c *client, st *state) {
+	st.mu.Lock()
+	delete(st.clients, c)
+	st.mu.Unlock()
 	c.closeOnce.Do(func() { close(c.send) })
 }
 
-func broadcast() {
-	s.mu.RLock()
-	active := s.active
-	sessions := s.sessions
-	clients := make([]*client, 0, len(s.clients))
-	for c := range s.clients {
+func broadcastState(st *state) {
+	st.mu.RLock()
+	active := st.active
+	sessions := st.sessions
+	clients := make([]*client, 0, len(st.clients))
+	for c := range st.clients {
 		clients = append(clients, c)
 	}
-	s.mu.RUnlock()
+	st.mu.RUnlock()
 
 	msg, _ := json.Marshal(message{Active: active, Sessions: sessions})
 	payload := string(msg)
@@ -210,7 +220,7 @@ func broadcast() {
 		case c.send <- payload:
 		default:
 			// Client is too slow — disconnect it.
-			removeClient(c)
+			removeClient(c, st)
 		}
 	}
 }

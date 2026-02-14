@@ -4,3 +4,4 @@ scripts/cc-live/cc-live
 services/cc-live/cc-live
 .playwright-cli/
 data/cc_sessions.json
+node_modules/

@@ -400,4 +400,8 @@
   }
 
   connect();
+
+  if (typeof globalThis.__TEST__ !== 'undefined') {
+    globalThis.__liveStatus = { formatTokens, formatTime, escapeHTML };
+  }
 })();
