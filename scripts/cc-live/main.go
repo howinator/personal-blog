@@ -113,8 +113,8 @@ func openDB() *sql.DB {
 	}
 	// Set pragmas explicitly — connection string params don't work reliably
 	// with modernc.org/sqlite.
-	db.Exec(`PRAGMA journal_mode=WAL`)
-	db.Exec(`PRAGMA busy_timeout=10000`)
+	_, _ = db.Exec(`PRAGMA journal_mode=WAL`)
+	_, _ = db.Exec(`PRAGMA busy_timeout=10000`)
 
 	// Retry CREATE TABLE to handle lock contention when the daemon's serve
 	// process already holds the DB open.
@@ -128,10 +128,10 @@ func openDB() *sql.DB {
 		)`)
 		if err == nil {
 			// Migration: add sensitive column (silently fails if already exists)
-			db.Exec(`ALTER TABLE sessions ADD COLUMN sensitive INTEGER NOT NULL DEFAULT 0`)
+			_, _ = db.Exec(`ALTER TABLE sessions ADD COLUMN sensitive INTEGER NOT NULL DEFAULT 0`)
 
 			// Session stats table — source of truth for cc_sessions.json
-			db.Exec(`CREATE TABLE IF NOT EXISTS session_stats (
+			_, _ = db.Exec(`CREATE TABLE IF NOT EXISTS session_stats (
 				session_id TEXT PRIMARY KEY,
 				transcript_path TEXT NOT NULL DEFAULT '',
 				cwd TEXT NOT NULL DEFAULT '',
@@ -151,7 +151,7 @@ func openDB() *sql.DB {
 				updated_at TEXT NOT NULL DEFAULT ''
 			)`)
 			// Migration: add file_size column
-			db.Exec(`ALTER TABLE session_stats ADD COLUMN file_size INTEGER NOT NULL DEFAULT 0`)
+			_, _ = db.Exec(`ALTER TABLE session_stats ADD COLUMN file_size INTEGER NOT NULL DEFAULT 0`)
 			return db
 		}
 		time.Sleep(200 * time.Millisecond)
@@ -185,7 +185,7 @@ func cmdRegister() {
 	}
 
 	db := openDB()
-	defer db.Close()
+	defer db.Close() //nolint:errcheck
 
 	_, err := db.Exec(
 		`INSERT OR REPLACE INTO sessions (session_id, transcript_path, cwd, model, registered_at, sensitive)
@@ -193,12 +193,12 @@ func cmdRegister() {
 		p.SessionID, p.TranscriptPath, p.Cwd, p.Model, time.Now().UTC().Format(time.RFC3339), sensitive,
 	)
 	if err != nil {
-		log.Fatalf("inserting session: %v", err)
+		log.Fatalf("inserting session: %v", err) //nolint:gocritic
 	}
 
 	// Also process transcript into session_stats
 	if p.TranscriptPath != "" {
-		processTranscript(db, p.TranscriptPath, &transcriptOverrides{
+		_, _ = processTranscript(db, p.TranscriptPath, &transcriptOverrides{
 			SessionID: p.SessionID,
 			Cwd:       p.Cwd,
 			Model:     p.Model,
@@ -219,11 +219,11 @@ func cmdUnregister() {
 	}
 
 	db := openDB()
-	defer db.Close()
+	defer db.Close() //nolint:errcheck
 
 	_, err := db.Exec(`DELETE FROM sessions WHERE session_id = ?`, p.SessionID)
 	if err != nil {
-		log.Fatalf("deleting session: %v", err)
+		log.Fatalf("deleting session: %v", err) //nolint:gocritic
 	}
 
 	// Check remaining sessions
@@ -396,17 +396,17 @@ func startDaemon() {
 	cmd.Env = os.Environ()
 
 	if err := cmd.Start(); err != nil {
-		lf.Close()
+		_ = lf.Close()
 		log.Fatalf("starting daemon: %v", err)
 	}
-	lf.Close()
+	_ = lf.Close()
 
 	if err := os.WriteFile(pidFile, []byte(strconv.Itoa(cmd.Process.Pid)), 0o644); err != nil {
 		log.Fatalf("writing pid file: %v", err)
 	}
 
 	// Detach — don't wait for the child
-	cmd.Process.Release()
+	_ = cmd.Process.Release()
 }
 
 func killDaemon() {
@@ -423,12 +423,12 @@ func killDaemon() {
 		return
 	}
 	_ = proc.Signal(syscall.SIGTERM)
-	os.Remove(pidFile)
+	_ = os.Remove(pidFile)
 }
 
 func cmdSync() {
 	db := openDB()
-	defer db.Close()
+	defer db.Close() //nolint:errcheck
 
 	transcripts := discoverTranscripts()
 	log.Printf("sync: discovered %d transcripts", len(transcripts))
@@ -440,10 +440,10 @@ func cmdSync() {
 		for rows.Next() {
 			var path string
 			var size int64
-			rows.Scan(&path, &size)
+			_ = rows.Scan(&path, &size)
 			existingSizes[path] = size
 		}
-		rows.Close()
+		_ = rows.Close()
 	}
 
 	// Filter to only files that need parsing
@@ -505,7 +505,7 @@ func cmdSync() {
 			log.Printf("sync: upserting %s: %v", r.session.sessionID, err)
 			continue
 		}
-		db.Exec(`UPDATE session_stats SET file_size = ? WHERE session_id = ?`,
+		_, _ = db.Exec(`UPDATE session_stats SET file_size = ? WHERE session_id = ?`,
 			r.size, r.session.sessionID)
 		needsSummary = append(needsSummary, trackerInfo{
 			sessionID: r.session.sessionID,
@@ -554,7 +554,7 @@ func cmdSync() {
 		generated := 0
 		for range len(jobs) {
 			r := <-results
-			db.Exec(`UPDATE session_stats SET summary = ? WHERE session_id = ?`, r.summary, r.sessionID)
+			_, _ = db.Exec(`UPDATE session_stats SET summary = ? WHERE session_id = ?`, r.summary, r.sessionID)
 			generated++
 		}
 		log.Printf("sync: generated %d summaries", generated)
@@ -573,7 +573,7 @@ func discoverTranscripts() []string {
 	claudeDir := filepath.Join(os.Getenv("HOME"), ".claude", "projects")
 	var paths []string
 
-	filepath.Walk(claudeDir, func(path string, info os.FileInfo, err error) error {
+	_ = filepath.Walk(claudeDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil // skip errors
 		}
@@ -595,32 +595,32 @@ func discoverTranscripts() []string {
 
 // sessionExport matches the exact JSON schema expected by Hugo's cc-sessions shortcode.
 type sessionExport struct {
-	SessionID        string `json:"session_id"`
-	Date             string `json:"date"`
-	DateDisplay      string `json:"date_display"`
-	Summary          string `json:"summary"`
-	Project          string `json:"project"`
-	Cwd              string `json:"cwd"`
-	NumUserPrompts   int    `json:"num_user_prompts"`
-	NumToolCalls     int    `json:"num_tool_calls"`
-	TotalInputTokens int64  `json:"total_input_tokens"`
-	TotalOutputTokens int64 `json:"total_output_tokens"`
-	TotalTokens      int64  `json:"total_tokens"`
+	SessionID               string `json:"session_id"`
+	Date                    string `json:"date"`
+	DateDisplay             string `json:"date_display"`
+	Summary                 string `json:"summary"`
+	Project                 string `json:"project"`
+	Cwd                     string `json:"cwd"`
+	NumUserPrompts          int    `json:"num_user_prompts"`
+	NumToolCalls            int    `json:"num_tool_calls"`
+	TotalInputTokens        int64  `json:"total_input_tokens"`
+	TotalOutputTokens       int64  `json:"total_output_tokens"`
+	TotalTokens             int64  `json:"total_tokens"`
 	TotalTokensDisplay      string `json:"total_tokens_display"`
 	TotalTokensDisplayShort string `json:"total_tokens_display_short"`
 	ActiveTimeSeconds       int    `json:"active_time_seconds"`
-	ActiveTimeDisplay string `json:"active_time_display"`
-	CcVersion        string `json:"cc_version"`
+	ActiveTimeDisplay       string `json:"active_time_display"`
+	CcVersion               string `json:"cc_version"`
 }
 
 type totalsExport struct {
-	SessionCount          int    `json:"session_count"`
-	TotalTokens           int64  `json:"total_tokens"`
+	SessionCount            int    `json:"session_count"`
+	TotalTokens             int64  `json:"total_tokens"`
 	TotalTokensDisplay      string `json:"total_tokens_display"`
 	TotalTokensDisplayShort string `json:"total_tokens_display_short"`
 	TotalToolCalls          int    `json:"total_tool_calls"`
-	TotalActiveTimeSeconds int   `json:"total_active_time_seconds"`
-	TotalActiveTimeDisplay string `json:"total_active_time_display"`
+	TotalActiveTimeSeconds  int    `json:"total_active_time_seconds"`
+	TotalActiveTimeDisplay  string `json:"total_active_time_display"`
 }
 
 type dataExport struct {
@@ -638,7 +638,7 @@ func exportSessionsJSON(db *sql.DB) {
 	if err != nil {
 		log.Fatalf("querying session_stats for export: %v", err)
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck
 
 	var sessions []sessionExport
 	var totalTokens int64
@@ -667,13 +667,13 @@ func exportSessionsJSON(db *sql.DB) {
 	data := dataExport{
 		Sessions: sessions,
 		Totals: totalsExport{
-			SessionCount:          len(sessions),
-			TotalTokens:           totalTokens,
+			SessionCount:            len(sessions),
+			TotalTokens:             totalTokens,
 			TotalTokensDisplay:      formatTokens(totalTokens),
 			TotalTokensDisplayShort: formatTokensShort(totalTokens),
 			TotalToolCalls:          totalToolCalls,
-			TotalActiveTimeSeconds: totalActiveTime,
-			TotalActiveTimeDisplay: formatTime(totalActiveTime),
+			TotalActiveTimeSeconds:  totalActiveTime,
+			TotalActiveTimeDisplay:  formatTime(totalActiveTime),
 		},
 	}
 
@@ -684,26 +684,26 @@ func exportSessionsJSON(db *sql.DB) {
 	dataFile := filepath.Join(blogRoot, "data", "cc_sessions.json")
 
 	// Ensure directory exists
-	os.MkdirAll(filepath.Dir(dataFile), 0o755)
+	_ = os.MkdirAll(filepath.Dir(dataFile), 0o755)
 
 	// Atomic write: temp file + rename
 	tmpFile, err := os.CreateTemp(filepath.Dir(dataFile), "cc_sessions_*.json")
 	if err != nil {
-		log.Fatalf("creating temp file: %v", err)
+		log.Fatalf("creating temp file: %v", err) //nolint:gocritic
 	}
 	tmpPath := tmpFile.Name()
 
 	enc := json.NewEncoder(tmpFile)
 	enc.SetIndent("", "  ")
 	if err := enc.Encode(data); err != nil {
-		tmpFile.Close()
-		os.Remove(tmpPath)
+		_ = tmpFile.Close()
+		_ = os.Remove(tmpPath)
 		log.Fatalf("encoding JSON: %v", err)
 	}
-	tmpFile.Close()
+	_ = tmpFile.Close()
 
 	if err := os.Rename(tmpPath, dataFile); err != nil {
-		os.Remove(tmpPath)
+		_ = os.Remove(tmpPath)
 		log.Fatalf("renaming temp file: %v", err)
 	}
 
@@ -722,12 +722,12 @@ func cmdServe() {
 	if err := os.WriteFile(pidFile, []byte(strconv.Itoa(os.Getpid())), 0o644); err != nil {
 		log.Fatalf("writing pid: %v", err)
 	}
-	defer os.Remove(pidFile)
+	defer os.Remove(pidFile) //nolint:errcheck
 
 	log.Printf("daemon started, pid=%d", os.Getpid())
 
 	db := openDB()
-	defer db.Close()
+	defer db.Close() //nolint:errcheck
 
 	trackers := make(map[string]*fileTracker)
 
@@ -793,7 +793,7 @@ func checkSessions(db *sql.DB, timeout time.Duration, trackers map[string]*fileT
 		log.Printf("querying sessions: %v", err)
 		return false, nil
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck
 
 	now := time.Now()
 	activeIDs := make(map[string]bool)
@@ -880,7 +880,7 @@ func checkSessions(db *sql.DB, timeout time.Duration, trackers map[string]*fileT
 		if isSensitive {
 			sensitiveInt = 1
 		}
-		db.Exec(`INSERT INTO session_stats
+		_, _ = db.Exec(`INSERT INTO session_stats
 			(session_id, transcript_path, cwd, project, model, date, summary,
 			 num_user_prompts, num_tool_calls, total_input_tokens, total_output_tokens,
 			 total_tokens, active_time_seconds, cc_version, sensitive, updated_at)
@@ -931,7 +931,7 @@ func parseTranscriptIncremental(path string, tracker *fileTracker) {
 		log.Printf("opening transcript %s: %v", path, err)
 		return
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 
 	// Seek to last known offset
 	if tracker.offset > 0 {
@@ -1320,7 +1320,7 @@ func generateSummary(userTexts []string, timeout time.Duration) string {
 		log.Printf("summary API call failed: %v", err)
 		return fallbackSummary(userTexts)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	var result struct {
 		Content []struct {
@@ -1377,7 +1377,7 @@ func sendHeartbeat(endpoint, apiKey string, sessions []sessionMetrics) {
 		log.Printf("sending heartbeat: %v", err)
 		return
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		log.Printf("heartbeat returned %d", resp.StatusCode)
 	}
@@ -1402,5 +1402,5 @@ func sendStop() {
 		log.Printf("sending stop: %v", err)
 		return
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 }

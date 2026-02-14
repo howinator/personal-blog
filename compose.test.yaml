@@ -1,0 +1,9 @@
+services:
+  cc-live:
+    build:
+      context: ./services/cc-live
+      dockerfile: Containerfile
+    environment:
+      - CC_LIVE_API_KEY=test-secret
+    ports:
+      - "18080:8080"

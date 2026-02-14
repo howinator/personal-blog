@@ -9,6 +9,7 @@ HOMESERVER_DIR ?= ../homeserver
         build-daemon restart-daemon reset-daemon sync \
         build-all push-all deploy-all \
         dev dev-down dev-heartbeat \
+        test test-go test-js lint lint-go test-integration \
         sync-plots
 
 # --- Blog ---
@@ -85,6 +86,27 @@ dev-heartbeat:
 	curl -sf -X POST http://localhost:8004/api/live/heartbeat \
 		-H "Authorization: Bearer dev-secret"
 
+# --- Testing & Linting ---
+
+test: test-go test-js
+
+test-go:
+	cd services/cc-live && go test -race -v ./...
+	cd scripts/cc-live && go test -race -v ./...
+
+test-js:
+	npm test
+
+lint: lint-go
+
+lint-go:
+	podman run --rm -v "$$(pwd)":/src -w /src/services/cc-live golangci/golangci-lint:latest golangci-lint run ./...
+	podman run --rm -v "$$(pwd)":/src -w /src/scripts/cc-live golangci/golangci-lint:latest golangci-lint run ./...
+
+test-integration:
+	docker compose -f compose.test.yaml up -d --build --wait
+	cd tests/integration && CC_LIVE_TEST_URL=http://localhost:18080 CC_LIVE_TEST_API_KEY=test-secret go test -race -v ./... ; \
+	  status=$$? ; docker compose -f compose.test.yaml down ; exit $$status
 # --- Plots ---
 
 sync-plots:
