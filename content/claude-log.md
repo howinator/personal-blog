@@ -1,9 +1,9 @@
 ---
-title: "Claude Log"
+title: "Claug"
 date: 2026-02-12T10:00:00-06:00
 layout: "claude-log"
 ---
 
-This page is automatically updated every time I end a [Claude Code](https://docs.anthropic.com/en/docs/claude-code) session. A `SessionEnd` hook fires a script that parses the session transcript, computes stats, and updates this page. The {{< cc-status-dot >}} in the nav pulses when I have an active session.
+A daemon monitors [Claude Code](https://docs.anthropic.com/en/docs/claude-code) so you can peep me yelling at Claude in real time. You'll see the {{< cc-status-dot >}} go green when a session is alive. Past sessions stick around below.
 
 {{< cc-sessions >}}
