@@ -29,12 +29,21 @@ type sessionData struct {
 	Summary      string `json:"summary"`
 }
 
+// client wraps a WebSocket connection with a buffered send channel.
+// A dedicated writer goroutine drains the channel, ensuring all writes
+// to the connection are serialized (websocket.Conn is not concurrency-safe).
+type client struct {
+	conn      *websocket.Conn
+	send      chan string
+	closeOnce sync.Once
+}
+
 type state struct {
 	mu            sync.RWMutex
 	active        bool
 	sessions      []sessionData
 	lastHeartbeat time.Time
-	clients       map[*websocket.Conn]struct{}
+	clients       map[*client]struct{}
 }
 
 // message is the WebSocket payload sent to browser clients.
@@ -49,7 +58,7 @@ type heartbeatPayload struct {
 }
 
 var s = &state{
-	clients: make(map[*websocket.Conn]struct{}),
+	clients: make(map[*client]struct{}),
 }
 
 func main() {
@@ -139,15 +148,29 @@ func main() {
 }
 
 func wsHandler(ws *websocket.Conn) {
+	c := &client{
+		conn: ws,
+		send: make(chan string, 16),
+	}
+
+	// Dedicated writer goroutine: serializes all writes to this connection.
+	go func() {
+		for msg := range c.send {
+			if err := websocket.Message.Send(c.conn, msg); err != nil {
+				c.conn.Close()
+				return
+			}
+		}
+	}()
+
+	// Register client and enqueue initial state atomically — the writer
+	// goroutine will send it before any broadcast messages.
 	s.mu.Lock()
-	s.clients[ws] = struct{}{}
-	active := s.active
-	sessions := s.sessions
+	s.clients[c] = struct{}{}
+	msg, _ := json.Marshal(message{Active: s.active, Sessions: s.sessions})
 	s.mu.Unlock()
 
-	// Send current state on connect
-	msg, _ := json.Marshal(message{Active: active, Sessions: sessions})
-	websocket.Message.Send(ws, string(msg))
+	c.send <- string(msg)
 
 	// Keep connection open, read to detect close
 	for {
@@ -157,28 +180,37 @@ func wsHandler(ws *websocket.Conn) {
 		}
 	}
 
+	removeClient(c)
+}
+
+// removeClient unregisters a client and closes its send channel exactly once.
+func removeClient(c *client) {
 	s.mu.Lock()
-	delete(s.clients, ws)
+	delete(s.clients, c)
 	s.mu.Unlock()
+	c.closeOnce.Do(func() { close(c.send) })
 }
 
 func broadcast() {
 	s.mu.RLock()
 	active := s.active
 	sessions := s.sessions
-	clients := make([]*websocket.Conn, 0, len(s.clients))
+	clients := make([]*client, 0, len(s.clients))
 	for c := range s.clients {
 		clients = append(clients, c)
 	}
 	s.mu.RUnlock()
 
 	msg, _ := json.Marshal(message{Active: active, Sessions: sessions})
+	payload := string(msg)
 	for _, c := range clients {
-		if err := websocket.Message.Send(c, string(msg)); err != nil {
-			s.mu.Lock()
-			delete(s.clients, c)
-			s.mu.Unlock()
-			c.Close()
+		// Non-blocking send: drop the message if the client's buffer is full
+		// rather than blocking the entire broadcast loop.
+		select {
+		case c.send <- payload:
+		default:
+			// Client is too slow — disconnect it.
+			removeClient(c)
 		}
 	}
 }
