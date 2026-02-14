@@ -81,5 +81,5 @@ dev-down:
 	docker compose down
 
 dev-heartbeat:
-	curl -sf -X POST http://localhost:8000/api/live/heartbeat \
+	curl -sf -X POST http://localhost:8004/api/live/heartbeat \
 		-H "Authorization: Bearer dev-secret"
