@@ -1,0 +1,16 @@
+[project]
+name = "timberline-plots"
+version = "0.1.0"
+description = "Styled chart generation for howinator.io"
+requires-python = ">=3.11"
+dependencies = [
+    "matplotlib>=3.8",
+    "numpy>=1.24",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/timberline_plots"]

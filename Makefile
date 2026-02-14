@@ -9,7 +9,8 @@ HOMESERVER_DIR ?= ../homeserver
         build-daemon restart-daemon reset-daemon sync \
         build-all push-all deploy-all \
         dev dev-down dev-heartbeat \
-        test test-go test-js lint lint-go test-integration
+        test test-go test-js lint lint-go test-integration \
+        sync-plots
 
 # --- Blog ---
 
@@ -106,3 +107,7 @@ test-integration:
 	docker compose -f compose.test.yaml up -d --build --wait
 	cd tests/integration && CC_LIVE_TEST_URL=http://localhost:18080 CC_LIVE_TEST_API_KEY=test-secret go test -race -v ./... ; \
 	  status=$$? ; docker compose -f compose.test.yaml down ; exit $$status
+# --- Plots ---
+
+sync-plots:
+	uv sync --project scripts/plots
