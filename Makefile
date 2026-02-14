@@ -16,7 +16,7 @@ sync: build-daemon
 	$(HOME)/.cc-live/cc-live-daemon sync
 
 build: sync
-	podman build --platform linux/amd64 -f Containerfile -t $(BLOG_IMAGE):$(SHA) -t $(BLOG_IMAGE):latest .
+	podman build --platform linux/amd64 -f site/Containerfile -t $(BLOG_IMAGE):$(SHA) -t $(BLOG_IMAGE):latest site/
 
 push: build
 	podman push $(BLOG_IMAGE):$(SHA)
