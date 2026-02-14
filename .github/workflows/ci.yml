@@ -17,8 +17,9 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: ${{ matrix.module }}/go.mod
-      - uses: golangci/golangci-lint-action@v6
+      - uses: golangci/golangci-lint-action@v7
         with:
+          version: v2.1
           working-directory: ${{ matrix.module }}
 
   test-go:
