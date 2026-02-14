@@ -23,7 +23,7 @@ services:
 
   blog:
     build:
-      context: .
+      context: ./site
       dockerfile: Containerfile
     labels:
       - "traefik.enable=true"

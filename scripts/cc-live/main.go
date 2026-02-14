@@ -681,7 +681,7 @@ func exportSessionsJSON(db *sql.DB) {
 	if blogRoot == "" {
 		blogRoot = filepath.Join(os.Getenv("HOME"), "projects", "personal-blog")
 	}
-	dataFile := filepath.Join(blogRoot, "data", "cc_sessions.json")
+	dataFile := filepath.Join(blogRoot, "site", "data", "cc_sessions.json")
 
 	// Ensure directory exists
 	os.MkdirAll(filepath.Dir(dataFile), 0o755)

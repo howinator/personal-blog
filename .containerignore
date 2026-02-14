@@ -1,7 +1,0 @@
-.git/
-public/
-scripts/
-__pycache__/
-*.pyc
-.DS_Store
-.containerignore
