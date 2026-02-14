@@ -185,6 +185,68 @@ Chroma monokailight, adapted to sit on parchment (`--code-bg`):
 6. **Mobile-first simplicity.** Single breakpoint at 600px. Hamburger nav, 2-col grids, smaller trees. No complex responsive gymnastics.
 7. **Content-width constraint.** Blog text never exceeds 680px for optimal reading line length.
 
+## Charts
+
+Charts are generated as SVG files by the `timberline-plots` Python library (`scripts/plots/`) and served from `static/img/charts/`. They must look like they belong on the parchment page — no white rectangles floating in the content.
+
+### Chart Style Spec
+
+| Element | Value | Notes |
+|---------|-------|-------|
+| Background | `#EBE1C3` (parchment) | Blends seamlessly into page — no visible chart boundary |
+| Spines | Left + bottom only, `#C4B892`, 0.8pt | Open, modern look — top and right spines hidden |
+| Grid | Horizontal lines only, `#C4B892` at 50% opacity | Aids y-value reading without clutter |
+| Title | 14pt bold, `#2B2B2B`, system sans-serif | |
+| Axis labels | 11pt, `#2B2B2B`, system sans-serif | |
+| Tick labels | 9pt, `#2B2B2B` text, `#6B6860` tick marks | |
+| Data lines | 2pt weight | |
+| Legend | `#E4DAB9` bg, `#C4B892` border, 90% opacity | Matches `--surface` / `--border` tokens |
+| Figure size | 8.5 × 5.0 in (~680px at 80 dpi) | Matches `--content-width` |
+
+**Data color cycle** (in order):
+
+| Index | Color | Name | Contrast | Origin |
+|-------|-------|------|----------|--------|
+| 0 | `#2E4D37` | Forest green | 7.21:1 | `--accent` |
+| 1 | `#A0522D` | Burnt sienna | 4.30:1 | New — warm earth tone |
+| 2 | `#A26200` | Dark amber | 3.76:1 | Darkened from syntax strings |
+| 3 | `#D1064F` | Dark magenta | 4.18:1 | Darkened from syntax operators |
+| 4 | `#7021FF` | Dark purple | 4.80:1 | Darkened from syntax numbers |
+| 5 | `#496D00` | Dark olive | 4.64:1 | Darkened from syntax functions |
+| 6 | `#75715e` | Taupe | 3.76:1 | Syntax: comments |
+
+The first data series is always forest green (the accent color). All chart colors pass WCAG AA graphical contrast (3:1+) against parchment `#EBE1C3`.
+
+### Vibe-Checking Charts
+
+Charts are static SVGs — they don't run in a browser, so the standard page-screenshot workflow doesn't apply. To vibe-check a chart:
+
+1. **Read the SVG file** with the Read tool (Claude sees SVG content natively).
+2. **Verify colors** by inspecting `fill:` and `stroke:` values in the SVG source against the table above. Key things to check:
+   - Figure background is `#ebe1c3` (not white, not transparent)
+   - Only left and bottom spines are present, colored `#c4b892`
+   - Grid lines are horizontal only, `#c4b892` with `stroke-opacity: 0.5`
+   - Data series use colors from the cycle above, in order
+   - Tick marks use `#6b6860`, tick labels use `#2b2b2b`
+   - Legend box (if present) has `#e4dab9` fill and `#c4b892` stroke
+3. **Verify typography** — font glyph IDs in the SVG should reference a system sans-serif (e.g. `HelveticaNeue`, `Arial`), not a CSS identifier like `ui-sans-serif` (which matplotlib can't resolve).
+4. **Check layout** — the SVG `viewBox` width should be roughly 550–560pt (8.5in × 80dpi ÷ 72pt/in ≈ 554pt). Height around 380pt.
+5. **Spot-check the overall feel** — does the chart look like a precise ink drawing in a field journal? Clean lines, no chartjunk, data-forward.
+
+If generating a new chart, run the example and read the output:
+
+```bash
+uv run --project scripts/plots python scripts/plots/examples/effort_comparison.py
+# Then read static/img/charts/effort-comparison.svg
+```
+
+### Common Failures
+
+- **White background** — forgot to apply the timberline style, or used `plt.savefig()` directly instead of `tp.save()`
+- **DejaVu Sans font** — matplotlib fell back to its default because the font list contains CSS identifiers instead of actual font names. Fix in `theme.py`.
+- **All four spines visible** — style not applied; `axes.spines.top` and `axes.spines.right` should be `False`
+- **Vertical grid lines** — `axes.grid.axis` should be `"y"`, not `"both"`
+
 ## File Map
 
 | File | What it styles |

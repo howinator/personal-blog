@@ -2,3 +2,6 @@
 public/
 scripts/cc-live/cc-live
 .playwright-cli/
+__pycache__/
+*.egg-info/
+.venv/
