@@ -15,7 +15,7 @@ HOMESERVER_DIR ?= ../homeserver
 # --- Blog ---
 
 sync: build-daemon
-	$(HOME)/.cc-live/cc-live-daemon sync
+	CC_STATS_BLOG_ROOT="$$(pwd)/site" $(HOME)/.cc-live/cc-live-daemon sync
 
 build: sync
 	podman build --platform linux/amd64 -f Containerfile -t $(BLOG_IMAGE):$(SHA) -t $(BLOG_IMAGE):latest .

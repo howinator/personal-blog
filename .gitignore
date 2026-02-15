@@ -1,10 +1,10 @@
 .DS_Store
-public/
+site/public/
 scripts/cc-live/cc-live
 services/cc-live/cc-live
 .playwright-cli/
 __pycache__/
 *.egg-info/
 .venv/
-data/cc_sessions.json
+site/data/cc_sessions.json
 node_modules/
