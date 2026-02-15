@@ -14,6 +14,22 @@
       baseTotals[stat] = Math.round(Number(el.getAttribute('data-raw'))) || 0;
     }
   });
+  var toolsTip = document.getElementById('cc-tools-tip');
+  var baseTopTools = [];
+  if (toolsTip) {
+    try {
+      baseTopTools = JSON.parse(toolsTip.getAttribute('data-tools') || '[]');
+    } catch(e) {}
+    statEls['tools-tip'] = toolsTip;
+  }
+
+  var tokenTip = document.getElementById('cc-token-tip');
+  if (tokenTip) {
+    statEls['token-tip'] = tokenTip;
+    baseTotals['input-raw'] = Math.round(Number(tokenTip.getAttribute('data-input-raw'))) || 0;
+    baseTotals['cache-raw'] = Math.round(Number(tokenTip.getAttribute('data-cache-raw'))) || 0;
+    baseTotals['output-raw'] = Math.round(Number(tokenTip.getAttribute('data-output-raw'))) || 0;
+  }
 
   // Collect static session IDs so we know which live sessions are already in the base totals
   var staticSessionIds = {};
@@ -36,6 +52,20 @@
         dots[i].title = 'Claude Code: offline';
       }
     }
+  }
+
+  function cleanToolName(name) {
+    var parts = name.split('__');
+    if (parts.length >= 3 && parts[0] === 'mcp') {
+      var providerParts = parts[1].split('_');
+      var service = providerParts[providerParts.length - 1];
+      return service + ': ' + parts.slice(2).join('__');
+    }
+    return name;
+  }
+
+  function formatCount(n) {
+    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   }
 
   function formatTokens(n) {
@@ -95,12 +125,18 @@
     var deltaTools = 0;
     var deltaCount = 0;
 
+    var deltaInput = 0;
+    var deltaCacheRead = 0;
+    var deltaOutput = 0;
     for (var id in liveSessions) {
       // Skip sessions already counted in the static base totals
       if (staticSessionIds[id]) continue;
       var sess = liveSessions[id];
       deltaCount++;
       deltaTokens += sess.total_tokens || 0;
+      deltaInput += sess.input_tokens || 0;
+      deltaCacheRead += sess.cache_read_input_tokens || 0;
+      deltaOutput += sess.output_tokens || 0;
       deltaTime += sess.active_time_seconds || 0;
       deltaTools += sess.tool_calls || 0;
     }
@@ -109,6 +145,47 @@
     updateStatDisplay(statEls['tokens'], formatTokens(baseTotals['tokens'] + deltaTokens));
     updateStatDisplay(statEls['active-time'], formatTime(baseTotals['active-time'] + deltaTime));
     updateStatDisplay(statEls['tool-calls'], String(baseTotals['tool-calls'] + deltaTools));
+
+    // Recalc top tools tooltip
+    if (statEls['tools-tip']) {
+      var merged = {};
+      // Start with base tools
+      for (var ti = 0; ti < baseTopTools.length; ti++) {
+        merged[baseTopTools[ti].name] = baseTopTools[ti].count;
+      }
+      // Merge live session tool_counts
+      for (var lid in liveSessions) {
+        if (staticSessionIds[lid]) continue;
+        var tc = liveSessions[lid].tool_counts;
+        if (tc) {
+          for (var toolName in tc) {
+            merged[toolName] = (merged[toolName] || 0) + tc[toolName];
+          }
+        }
+      }
+      // Sort and take top 5
+      var toolArr = [];
+      for (var tn in merged) {
+        toolArr.push({name: tn, count: merged[tn], display: cleanToolName(tn)});
+      }
+      toolArr.sort(function(a, b) { return b.count - a.count; });
+      if (toolArr.length > 5) toolArr = toolArr.slice(0, 5);
+      var tipParts = [];
+      for (var tj = 0; tj < toolArr.length; tj++) {
+        tipParts.push(toolArr[tj].display + ' ' + formatCount(toolArr[tj].count));
+      }
+      statEls['tools-tip'].innerHTML = tipParts.join('<br>');
+    }
+
+    if (statEls['token-tip']) {
+      var tipEl = statEls['token-tip'];
+      var newInput = (baseTotals['input-raw'] || 0) + deltaInput;
+      var newCache = (baseTotals['cache-raw'] || 0) + deltaCacheRead;
+      var newOutput = (baseTotals['output-raw'] || 0) + deltaOutput;
+      tipEl.innerHTML = formatTokens(newInput) + ' input<br>' +
+                        formatTokens(newCache) + ' cached<br>' +
+                        formatTokens(newOutput) + ' output';
+    }
   }
 
   // Enhance an existing static card with liveness indicators
@@ -232,6 +309,7 @@
       '<tr><td>User Prompts</td><td>' + (session.user_prompts || 0) + '</td></tr>' +
       '<tr><td>Tool Calls</td><td>' + (session.tool_calls || 0) + '</td></tr>' +
       '<tr><td>Input Tokens</td><td>' + formatTokens(session.input_tokens || 0) + '</td></tr>' +
+      '<tr><td>Cache Read Tokens</td><td>' + formatTokens(session.cache_read_input_tokens || 0) + '</td></tr>' +
       '<tr><td>Output Tokens</td><td>' + formatTokens(session.output_tokens || 0) + '</td></tr>' +
       '<tr><td>Total Tokens</td><td>' + tokenDisplay + '</td></tr>' +
       '<tr><td>Active Time</td><td>' + timeDisplay + '</td></tr>' +

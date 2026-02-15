@@ -8,17 +8,29 @@
     <div class="cc-stat-value" data-stat="sessions" data-raw="{{ printf "%.0f" $totals.session_count }}">{{ $totals.session_count }}</div>
     <div class="cc-stat-label">Sessions</div>
   </div>
-  <div class="cc-stat-box">
+  <div class="cc-stat-box cc-stat-hoverable" onclick="this.classList.toggle('active')">
     <div class="cc-stat-value" data-stat="tokens" data-raw="{{ printf "%.0f" $totals.total_tokens }}">{{ $totals.total_tokens_display }}</div>
     <div class="cc-stat-label">Total Tokens</div>
+    <div class="cc-stat-tip" id="cc-token-tip"
+         data-input-raw="{{ printf "%.0f" $totals.total_input_tokens }}"
+         data-cache-raw="{{ printf "%.0f" $totals.total_cache_read_input_tokens }}"
+         data-output-raw="{{ printf "%.0f" $totals.total_output_tokens }}">
+      {{ $totals.total_input_tokens_display }} input<br>
+      {{ $totals.total_cache_read_tokens_display }} cached<br>
+      {{ $totals.total_output_tokens_display }} output
+    </div>
   </div>
   <div class="cc-stat-box">
     <div class="cc-stat-value" data-stat="active-time" data-raw="{{ printf "%.0f" $totals.total_active_time_seconds }}">{{ $totals.total_active_time_display }}</div>
     <div class="cc-stat-label">Active Time</div>
   </div>
-  <div class="cc-stat-box">
+  <div class="cc-stat-box cc-stat-hoverable" onclick="this.classList.toggle('active')">
     <div class="cc-stat-value" data-stat="tool-calls" data-raw="{{ printf "%.0f" $totals.total_tool_calls }}">{{ $totals.total_tool_calls }}</div>
     <div class="cc-stat-label">Tool Calls</div>
+    <div class="cc-stat-tip" id="cc-tools-tip"
+         data-tools='{{ $totals.top_tools | jsonify }}'>
+      {{ range $i, $tool := $totals.top_tools }}{{ if $i }}<br>{{ end }}{{ $tool.display }} {{ $tool.count }}{{ end }}
+    </div>
   </div>
 </div>
 
@@ -39,6 +51,7 @@
         <tr><td>User Prompts</td><td>{{ .num_user_prompts }}</td></tr>
         <tr><td>Tool Calls</td><td>{{ .num_tool_calls }}</td></tr>
         <tr><td>Input Tokens</td><td>{{ printf "%.0f" .total_input_tokens }}</td></tr>
+        <tr><td>Cache Read Tokens</td><td>{{ printf "%.0f" .total_cache_read_input_tokens }}</td></tr>
         <tr><td>Output Tokens</td><td>{{ printf "%.0f" .total_output_tokens }}</td></tr>
         <tr><td>Total Tokens</td><td>{{ .total_tokens_display }}</td></tr>
         <tr><td>Active Time</td><td>{{ .active_time_display }}</td></tr>

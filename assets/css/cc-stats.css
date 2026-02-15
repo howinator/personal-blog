@@ -35,6 +35,49 @@
   margin-top: 0.25rem;
 }
 
+/* --- Token breakdown tooltip --- */
+.cc-stat-hoverable {
+  position: relative;
+  cursor: pointer;
+}
+
+.cc-stat-tip {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #4a4740;
+  color: var(--bg, #EBE1C3);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  white-space: nowrap;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  pointer-events: none;
+}
+
+.cc-stat-tip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #4a4740;
+}
+
+.cc-stat-hoverable:hover .cc-stat-tip,
+.cc-stat-hoverable.active .cc-stat-tip {
+  visibility: visible;
+  opacity: 1;
+}
+
 /* --- Session List --- */
 .cc-session-list {
   display: flex;
