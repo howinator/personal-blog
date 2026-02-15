@@ -20,7 +20,7 @@ jobs:
             integration:
               - 'services/cc-live/**'
               - 'scripts/cc-live/**'
-              - 'assets/js/**'
+              - 'site/assets/js/**'
               - 'tests/integration/**'
               - 'compose.test.yaml'
 

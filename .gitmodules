@@ -1,6 +1,0 @@
-[submodule "themes/beautifulhugo"]
-	path = themes/beautifulhugo
-	url = git@github.com:howinator/beautifulhugo.git
-[submodule "themes/hugo-sustain"]
-	path = themes/hugo-sustain
-	url = git@github.com:howinator/hugo-sustain.git
