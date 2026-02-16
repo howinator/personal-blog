@@ -231,13 +231,16 @@ func TestProcessEntry_AssistantTokens(t *testing.T) {
 
 	processEntry(entry, tracker)
 
-	if tracker.metrics.InputTokens != 130 { // 100 + 20 + 10
-		t.Errorf("InputTokens = %d, want 130", tracker.metrics.InputTokens)
+	if tracker.metrics.InputTokens != 120 { // 100 + 20 (no cache_read)
+		t.Errorf("InputTokens = %d, want 120", tracker.metrics.InputTokens)
+	}
+	if tracker.metrics.CacheReadInputTokens != 10 {
+		t.Errorf("CacheReadInputTokens = %d, want 10", tracker.metrics.CacheReadInputTokens)
 	}
 	if tracker.metrics.OutputTokens != 50 {
 		t.Errorf("OutputTokens = %d, want 50", tracker.metrics.OutputTokens)
 	}
-	if tracker.metrics.TotalTokens != 180 { // 130 + 50
+	if tracker.metrics.TotalTokens != 180 { // 120 + 10 + 50
 		t.Errorf("TotalTokens = %d, want 180", tracker.metrics.TotalTokens)
 	}
 	if !tracker.hasAssistantResponse {
@@ -255,6 +258,7 @@ func TestProcessEntry_ToolCalls(t *testing.T) {
 				map[string]interface{}{"type": "text", "text": "response"},
 				map[string]interface{}{"type": "tool_use", "id": "t1", "name": "Read"},
 				map[string]interface{}{"type": "tool_use", "id": "t2", "name": "Write"},
+				map[string]interface{}{"type": "tool_use", "id": "t3", "name": "Read"},
 			},
 			"usage": map[string]interface{}{"input_tokens": float64(10), "output_tokens": float64(5)},
 		},
@@ -263,8 +267,17 @@ func TestProcessEntry_ToolCalls(t *testing.T) {
 
 	processEntry(entry, tracker)
 
-	if tracker.metrics.ToolCalls != 2 {
-		t.Errorf("ToolCalls = %d, want 2", tracker.metrics.ToolCalls)
+	if tracker.metrics.ToolCalls != 3 {
+		t.Errorf("ToolCalls = %d, want 3", tracker.metrics.ToolCalls)
+	}
+	if tracker.metrics.ToolCounts == nil {
+		t.Fatal("ToolCounts is nil, want non-nil")
+	}
+	if tracker.metrics.ToolCounts["Read"] != 2 {
+		t.Errorf("ToolCounts[Read] = %d, want 2", tracker.metrics.ToolCounts["Read"])
+	}
+	if tracker.metrics.ToolCounts["Write"] != 1 {
+		t.Errorf("ToolCounts[Write] = %d, want 1", tracker.metrics.ToolCounts["Write"])
 	}
 }
 
@@ -305,6 +318,28 @@ func TestProcessEntry_ActiveTime(t *testing.T) {
 	}
 }
 
+// --- cleanToolName ---
+
+func TestCleanToolName(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"Read", "Read"},
+		{"Write", "Write"},
+		{"Bash", "Bash"},
+		{"mcp__claude_ai_Linear__update_issue", "Linear: update_issue"},
+		{"mcp__claude_ai_Linear__list_issues", "Linear: list_issues"},
+		{"mcp__provider__Service__do_thing", "provider: Service__do_thing"},
+	}
+	for _, tt := range tests {
+		got := cleanToolName(tt.input)
+		if got != tt.expected {
+			t.Errorf("cleanToolName(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
 // --- parseTranscriptIncremental ---
 
 func TestParseTranscriptIncremental(t *testing.T) {
@@ -327,14 +362,25 @@ func TestParseTranscriptIncremental(t *testing.T) {
 	if tracker.metrics.ToolCalls != 2 {
 		t.Errorf("ToolCalls = %d, want 2", tracker.metrics.ToolCalls)
 	}
-	// Input: (150+20+10) + (200+0+50) + (100+0+0) = 530
-	if tracker.metrics.InputTokens != 530 {
-		t.Errorf("InputTokens = %d, want 530", tracker.metrics.InputTokens)
+	if tracker.metrics.ToolCounts["Read"] != 1 {
+		t.Errorf("ToolCounts[Read] = %d, want 1", tracker.metrics.ToolCounts["Read"])
+	}
+	if tracker.metrics.ToolCounts["Write"] != 1 {
+		t.Errorf("ToolCounts[Write] = %d, want 1", tracker.metrics.ToolCounts["Write"])
+	}
+	// Input: (150+20) + (200+0) + (100+0) = 470 (excludes cache_read)
+	if tracker.metrics.InputTokens != 470 {
+		t.Errorf("InputTokens = %d, want 470", tracker.metrics.InputTokens)
+	}
+	// Cache read: 10 + 50 + 0 = 60
+	if tracker.metrics.CacheReadInputTokens != 60 {
+		t.Errorf("CacheReadInputTokens = %d, want 60", tracker.metrics.CacheReadInputTokens)
 	}
 	// Output: 80 + 120 + 60 = 260
 	if tracker.metrics.OutputTokens != 260 {
 		t.Errorf("OutputTokens = %d, want 260", tracker.metrics.OutputTokens)
 	}
+	// Total: 470 + 60 + 260 = 790 (unchanged)
 	if tracker.metrics.TotalTokens != 790 {
 		t.Errorf("TotalTokens = %d, want 790", tracker.metrics.TotalTokens)
 	}
@@ -410,12 +456,14 @@ func openTestDB(t *testing.T) *sql.DB {
 		num_user_prompts INTEGER NOT NULL DEFAULT 0,
 		num_tool_calls INTEGER NOT NULL DEFAULT 0,
 		total_input_tokens INTEGER NOT NULL DEFAULT 0,
+		total_cache_read_input_tokens INTEGER NOT NULL DEFAULT 0,
 		total_output_tokens INTEGER NOT NULL DEFAULT 0,
 		total_tokens INTEGER NOT NULL DEFAULT 0,
 		active_time_seconds INTEGER NOT NULL DEFAULT 0,
 		cc_version TEXT NOT NULL DEFAULT '',
 		sensitive INTEGER NOT NULL DEFAULT 0,
 		file_size INTEGER NOT NULL DEFAULT 0,
+		tool_counts_json TEXT NOT NULL DEFAULT '{}',
 		updated_at TEXT NOT NULL DEFAULT ''
 	)`)
 	if err != nil {
@@ -507,9 +555,9 @@ func TestExportSessionsJSON(t *testing.T) {
 	// Insert test data
 	_, _ = db.Exec(`INSERT INTO session_stats
 		(session_id, date, summary, project, cwd, num_user_prompts, num_tool_calls,
-		 total_input_tokens, total_output_tokens, total_tokens, active_time_seconds, cc_version, updated_at)
+		 total_input_tokens, total_output_tokens, total_tokens, active_time_seconds, cc_version, tool_counts_json, updated_at)
 		VALUES ('s1', '2026-02-10T14:00:00-06:00', 'Test session', 'myproj', '/home/user/myproj',
-		 5, 10, 1000, 500, 1500, 300, '1.0.5', ?)`,
+		 5, 10, 1000, 500, 1500, 300, '1.0.5', '{"Read":5,"Write":3,"Bash":2}', ?)`,
 		time.Now().UTC().Format(time.RFC3339))
 
 	// Set blog root to temp dir
@@ -544,5 +592,18 @@ func TestExportSessionsJSON(t *testing.T) {
 	}
 	if export.Totals.TotalTokens != 1500 {
 		t.Errorf("total_tokens = %d, want 1500", export.Totals.TotalTokens)
+	}
+	if len(export.Totals.TopTools) != 3 {
+		t.Fatalf("top_tools count = %d, want 3", len(export.Totals.TopTools))
+	}
+	// Should be sorted descending: Read(5), Write(3), Bash(2)
+	if export.Totals.TopTools[0].Name != "Read" || export.Totals.TopTools[0].Count != 5 {
+		t.Errorf("top_tools[0] = %v, want Read:5", export.Totals.TopTools[0])
+	}
+	if export.Totals.TopTools[1].Name != "Write" || export.Totals.TopTools[1].Count != 3 {
+		t.Errorf("top_tools[1] = %v, want Write:3", export.Totals.TopTools[1])
+	}
+	if export.Totals.TopTools[2].Name != "Bash" || export.Totals.TopTools[2].Count != 2 {
+		t.Errorf("top_tools[2] = %v, want Bash:2", export.Totals.TopTools[2])
 	}
 }

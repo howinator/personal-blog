@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	gosync "sync"
@@ -40,18 +41,20 @@ type hookPayload struct {
 }
 
 type sessionMetrics struct {
-	SessionID    string `json:"session_id"`
-	TotalTokens  int64  `json:"total_tokens"`
-	InputTokens  int64  `json:"input_tokens"`
-	OutputTokens int64  `json:"output_tokens"`
-	ToolCalls    int    `json:"tool_calls"`
-	UserPrompts  int    `json:"user_prompts"`
-	ActiveTime   int    `json:"active_time_seconds"`
-	LastPrompt   string `json:"last_prompt"`
-	Project      string `json:"project"`
-	Model        string `json:"model"`
-	Sensitive    bool   `json:"sensitive"`
-	Summary      string `json:"summary"`
+	SessionID            string         `json:"session_id"`
+	TotalTokens          int64          `json:"total_tokens"`
+	InputTokens          int64          `json:"input_tokens"`
+	CacheReadInputTokens int64          `json:"cache_read_input_tokens"`
+	OutputTokens         int64          `json:"output_tokens"`
+	ToolCalls            int            `json:"tool_calls"`
+	ToolCounts           map[string]int `json:"tool_counts,omitempty"`
+	UserPrompts          int            `json:"user_prompts"`
+	ActiveTime           int            `json:"active_time_seconds"`
+	LastPrompt           string         `json:"last_prompt"`
+	Project              string         `json:"project"`
+	Model                string         `json:"model"`
+	Sensitive            bool           `json:"sensitive"`
+	Summary              string         `json:"summary"`
 }
 
 type fileTracker struct {
@@ -152,6 +155,12 @@ func openDB() *sql.DB {
 			)`)
 			// Migration: add file_size column
 			_, _ = db.Exec(`ALTER TABLE session_stats ADD COLUMN file_size INTEGER NOT NULL DEFAULT 0`)
+			// Migration: add cache_read_input_tokens column + force re-parse
+			_, _ = db.Exec(`ALTER TABLE session_stats ADD COLUMN total_cache_read_input_tokens INTEGER NOT NULL DEFAULT 0`)
+			_, _ = db.Exec(`UPDATE session_stats SET file_size = 0 WHERE total_cache_read_input_tokens = 0`)
+			// Migration: add tool_counts_json column + force re-parse
+			_, _ = db.Exec(`ALTER TABLE session_stats ADD COLUMN tool_counts_json TEXT NOT NULL DEFAULT '{}'`)
+			_, _ = db.Exec(`UPDATE session_stats SET file_size = 0 WHERE tool_counts_json = '{}'`)
 			return db
 		}
 		time.Sleep(200 * time.Millisecond)
@@ -312,13 +321,21 @@ func parseTranscriptData(transcriptPath string, overrides *transcriptOverrides) 
 
 // upsertSessionStats writes a parsed session to the DB, preserving existing non-empty summary.
 func upsertSessionStats(db *sql.DB, s *parsedSession) error {
+	toolCountsJSON := "{}"
+	if len(s.tracker.metrics.ToolCounts) > 0 {
+		b, err := json.Marshal(s.tracker.metrics.ToolCounts)
+		if err == nil {
+			toolCountsJSON = string(b)
+		}
+	}
+
 	_, err := db.Exec(`INSERT INTO session_stats
 		(session_id, transcript_path, cwd, project, model, date, summary,
-		 num_user_prompts, num_tool_calls, total_input_tokens, total_output_tokens,
-		 total_tokens, active_time_seconds, cc_version, sensitive, updated_at)
+		 num_user_prompts, num_tool_calls, total_input_tokens, total_cache_read_input_tokens,
+		 total_output_tokens, total_tokens, active_time_seconds, cc_version, sensitive, tool_counts_json, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?, '',
 		 ?, ?, ?, ?,
-		 ?, ?, ?, ?, ?)
+		 ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(session_id) DO UPDATE SET
 		 transcript_path = excluded.transcript_path,
 		 cwd = CASE WHEN excluded.cwd != '' THEN excluded.cwd ELSE session_stats.cwd END,
@@ -329,18 +346,21 @@ func upsertSessionStats(db *sql.DB, s *parsedSession) error {
 		 num_user_prompts = excluded.num_user_prompts,
 		 num_tool_calls = excluded.num_tool_calls,
 		 total_input_tokens = excluded.total_input_tokens,
+		 total_cache_read_input_tokens = excluded.total_cache_read_input_tokens,
 		 total_output_tokens = excluded.total_output_tokens,
 		 total_tokens = excluded.total_tokens,
 		 active_time_seconds = excluded.active_time_seconds,
 		 cc_version = CASE WHEN excluded.cc_version != '' THEN excluded.cc_version ELSE session_stats.cc_version END,
 		 sensitive = excluded.sensitive,
+		 tool_counts_json = excluded.tool_counts_json,
 		 updated_at = excluded.updated_at`,
 		s.sessionID, s.transcriptPath, s.cwd, s.project, s.model,
 		s.tracker.firstTimestamp,
 		s.tracker.metrics.UserPrompts, s.tracker.metrics.ToolCalls,
-		s.tracker.metrics.InputTokens, s.tracker.metrics.OutputTokens,
-		s.tracker.metrics.TotalTokens, s.tracker.metrics.ActiveTime,
-		s.tracker.transcriptVersion, s.sensitiveInt,
+		s.tracker.metrics.InputTokens, s.tracker.metrics.CacheReadInputTokens,
+		s.tracker.metrics.OutputTokens, s.tracker.metrics.TotalTokens,
+		s.tracker.metrics.ActiveTime,
+		s.tracker.transcriptVersion, s.sensitiveInt, toolCountsJSON,
 		time.Now().UTC().Format(time.RFC3339),
 	)
 	return err
@@ -595,32 +615,41 @@ func discoverTranscripts() []string {
 
 // sessionExport matches the exact JSON schema expected by Hugo's cc-sessions shortcode.
 type sessionExport struct {
-	SessionID               string `json:"session_id"`
-	Date                    string `json:"date"`
-	DateDisplay             string `json:"date_display"`
-	Summary                 string `json:"summary"`
-	Project                 string `json:"project"`
-	Cwd                     string `json:"cwd"`
-	NumUserPrompts          int    `json:"num_user_prompts"`
-	NumToolCalls            int    `json:"num_tool_calls"`
-	TotalInputTokens        int64  `json:"total_input_tokens"`
-	TotalOutputTokens       int64  `json:"total_output_tokens"`
-	TotalTokens             int64  `json:"total_tokens"`
-	TotalTokensDisplay      string `json:"total_tokens_display"`
-	TotalTokensDisplayShort string `json:"total_tokens_display_short"`
-	ActiveTimeSeconds       int    `json:"active_time_seconds"`
-	ActiveTimeDisplay       string `json:"active_time_display"`
-	CcVersion               string `json:"cc_version"`
+	SessionID                   string `json:"session_id"`
+	Date                        string `json:"date"`
+	DateDisplay                 string `json:"date_display"`
+	Summary                     string `json:"summary"`
+	Project                     string `json:"project"`
+	Cwd                         string `json:"cwd"`
+	NumUserPrompts              int    `json:"num_user_prompts"`
+	NumToolCalls                int    `json:"num_tool_calls"`
+	TotalInputTokens            int64  `json:"total_input_tokens"`
+	TotalCacheReadInputTokens   int64  `json:"total_cache_read_input_tokens"`
+	TotalCacheReadTokensDisplay string `json:"total_cache_read_tokens_display"`
+	TotalOutputTokens           int64  `json:"total_output_tokens"`
+	TotalTokens                 int64  `json:"total_tokens"`
+	TotalTokensDisplay          string `json:"total_tokens_display"`
+	TotalTokensDisplayShort     string `json:"total_tokens_display_short"`
+	ActiveTimeSeconds           int    `json:"active_time_seconds"`
+	ActiveTimeDisplay           string `json:"active_time_display"`
+	CcVersion                   string `json:"cc_version"`
 }
 
 type totalsExport struct {
-	SessionCount            int    `json:"session_count"`
-	TotalTokens             int64  `json:"total_tokens"`
-	TotalTokensDisplay      string `json:"total_tokens_display"`
-	TotalTokensDisplayShort string `json:"total_tokens_display_short"`
-	TotalToolCalls          int    `json:"total_tool_calls"`
-	TotalActiveTimeSeconds  int    `json:"total_active_time_seconds"`
-	TotalActiveTimeDisplay  string `json:"total_active_time_display"`
+	SessionCount                int         `json:"session_count"`
+	TotalTokens                 int64       `json:"total_tokens"`
+	TotalTokensDisplay          string      `json:"total_tokens_display"`
+	TotalTokensDisplayShort     string      `json:"total_tokens_display_short"`
+	TotalInputTokens            int64       `json:"total_input_tokens"`
+	TotalInputTokensDisplay     string      `json:"total_input_tokens_display"`
+	TotalCacheReadInputTokens   int64       `json:"total_cache_read_input_tokens"`
+	TotalCacheReadTokensDisplay string      `json:"total_cache_read_tokens_display"`
+	TotalOutputTokens           int64       `json:"total_output_tokens"`
+	TotalOutputTokensDisplay    string      `json:"total_output_tokens_display"`
+	TotalToolCalls              int         `json:"total_tool_calls"`
+	TotalActiveTimeSeconds      int         `json:"total_active_time_seconds"`
+	TotalActiveTimeDisplay      string      `json:"total_active_time_display"`
+	TopTools                    []toolEntry `json:"top_tools"`
 }
 
 type dataExport struct {
@@ -630,8 +659,8 @@ type dataExport struct {
 
 func exportSessionsJSON(db *sql.DB) {
 	rows, err := db.Query(`SELECT session_id, date, summary, project, cwd,
-		num_user_prompts, num_tool_calls, total_input_tokens, total_output_tokens,
-		total_tokens, active_time_seconds, cc_version
+		num_user_prompts, num_tool_calls, total_input_tokens, total_cache_read_input_tokens,
+		total_output_tokens, total_tokens, active_time_seconds, cc_version, tool_counts_json
 		FROM session_stats
 		WHERE total_tokens > 0 AND date >= ?
 		ORDER BY date DESC`, "2026-02-07")
@@ -642,38 +671,61 @@ func exportSessionsJSON(db *sql.DB) {
 
 	var sessions []sessionExport
 	var totalTokens int64
+	var totalInputTokens int64
+	var totalCacheReadTokens int64
+	var totalOutputTokens int64
 	var totalToolCalls int
 	var totalActiveTime int
+	var allToolCounts []map[string]int
 
 	for rows.Next() {
 		var s sessionExport
+		var toolCountsStr string
 		if err := rows.Scan(&s.SessionID, &s.Date, &s.Summary, &s.Project, &s.Cwd,
-			&s.NumUserPrompts, &s.NumToolCalls, &s.TotalInputTokens, &s.TotalOutputTokens,
-			&s.TotalTokens, &s.ActiveTimeSeconds, &s.CcVersion); err != nil {
+			&s.NumUserPrompts, &s.NumToolCalls, &s.TotalInputTokens, &s.TotalCacheReadInputTokens,
+			&s.TotalOutputTokens, &s.TotalTokens, &s.ActiveTimeSeconds, &s.CcVersion, &toolCountsStr); err != nil {
 			log.Printf("scanning export row: %v", err)
 			continue
 		}
 		s.DateDisplay = formatDate(s.Date)
 		s.TotalTokensDisplay = formatTokens(s.TotalTokens)
 		s.TotalTokensDisplayShort = formatTokensShort(s.TotalTokens)
+		s.TotalCacheReadTokensDisplay = formatTokens(s.TotalCacheReadInputTokens)
 		s.ActiveTimeDisplay = formatTime(s.ActiveTimeSeconds)
 		sessions = append(sessions, s)
 
 		totalTokens += s.TotalTokens
+		totalInputTokens += s.TotalInputTokens
+		totalCacheReadTokens += s.TotalCacheReadInputTokens
+		totalOutputTokens += s.TotalOutputTokens
 		totalToolCalls += s.NumToolCalls
 		totalActiveTime += s.ActiveTimeSeconds
+
+		if toolCountsStr != "" && toolCountsStr != "{}" {
+			var tc map[string]int
+			if err := json.Unmarshal([]byte(toolCountsStr), &tc); err == nil {
+				allToolCounts = append(allToolCounts, tc)
+			}
+		}
 	}
 
 	data := dataExport{
 		Sessions: sessions,
 		Totals: totalsExport{
-			SessionCount:            len(sessions),
-			TotalTokens:             totalTokens,
-			TotalTokensDisplay:      formatTokens(totalTokens),
-			TotalTokensDisplayShort: formatTokensShort(totalTokens),
-			TotalToolCalls:          totalToolCalls,
-			TotalActiveTimeSeconds:  totalActiveTime,
-			TotalActiveTimeDisplay:  formatTime(totalActiveTime),
+			SessionCount:                len(sessions),
+			TotalTokens:                 totalTokens,
+			TotalTokensDisplay:          formatTokens(totalTokens),
+			TotalTokensDisplayShort:     formatTokensShort(totalTokens),
+			TotalInputTokens:            totalInputTokens,
+			TotalInputTokensDisplay:     formatTokens(totalInputTokens),
+			TotalCacheReadInputTokens:   totalCacheReadTokens,
+			TotalCacheReadTokensDisplay: formatTokens(totalCacheReadTokens),
+			TotalOutputTokens:           totalOutputTokens,
+			TotalOutputTokensDisplay:    formatTokens(totalOutputTokens),
+			TotalToolCalls:              totalToolCalls,
+			TotalActiveTimeSeconds:      totalActiveTime,
+			TotalActiveTimeDisplay:      formatTime(totalActiveTime),
+			TopTools:                    topTools(allToolCounts, 5),
 		},
 	}
 
@@ -883,29 +935,38 @@ func checkSessions(db *sql.DB, timeout time.Duration, trackers map[string]*fileT
 		if isSensitive {
 			sensitiveInt = 1
 		}
+		toolCountsJSON := "{}"
+		if len(tracker.metrics.ToolCounts) > 0 {
+			if b, err := json.Marshal(tracker.metrics.ToolCounts); err == nil {
+				toolCountsJSON = string(b)
+			}
+		}
 		_, _ = db.Exec(`INSERT INTO session_stats
 			(session_id, transcript_path, cwd, project, model, date, summary,
-			 num_user_prompts, num_tool_calls, total_input_tokens, total_output_tokens,
-			 total_tokens, active_time_seconds, cc_version, sensitive, updated_at)
+			 num_user_prompts, num_tool_calls, total_input_tokens, total_cache_read_input_tokens,
+			 total_output_tokens, total_tokens, active_time_seconds, cc_version, sensitive, tool_counts_json, updated_at)
 			VALUES (?, ?, ?, ?, ?, ?, ?,
 			 ?, ?, ?, ?,
-			 ?, ?, ?, ?, ?)
+			 ?, ?, ?, ?, ?, ?, ?)
 			ON CONFLICT(session_id) DO UPDATE SET
 			 num_user_prompts = excluded.num_user_prompts,
 			 num_tool_calls = excluded.num_tool_calls,
 			 total_input_tokens = excluded.total_input_tokens,
+			 total_cache_read_input_tokens = excluded.total_cache_read_input_tokens,
 			 total_output_tokens = excluded.total_output_tokens,
 			 total_tokens = excluded.total_tokens,
 			 active_time_seconds = excluded.active_time_seconds,
 			 summary = CASE WHEN session_stats.summary != '' AND excluded.summary = ''
 			           THEN session_stats.summary ELSE excluded.summary END,
+			 tool_counts_json = excluded.tool_counts_json,
 			 updated_at = excluded.updated_at`,
 			sessionID, transcriptPath, cwd, project, model,
 			tracker.firstTimestamp, tracker.metrics.Summary,
 			tracker.metrics.UserPrompts, tracker.metrics.ToolCalls,
-			tracker.metrics.InputTokens, tracker.metrics.OutputTokens,
-			tracker.metrics.TotalTokens, tracker.metrics.ActiveTime,
-			tracker.transcriptVersion, sensitiveInt,
+			tracker.metrics.InputTokens, tracker.metrics.CacheReadInputTokens,
+			tracker.metrics.OutputTokens, tracker.metrics.TotalTokens,
+			tracker.metrics.ActiveTime,
+			tracker.transcriptVersion, sensitiveInt, toolCountsJSON,
 			time.Now().UTC().Format(time.RFC3339),
 		)
 
@@ -1090,17 +1151,25 @@ func processEntry(entry map[string]interface{}, tracker *fileTracker) {
 			}
 			if block["type"] == "tool_use" {
 				tracker.metrics.ToolCalls++
+				if name, ok := block["name"].(string); ok && name != "" {
+					if tracker.metrics.ToolCounts == nil {
+						tracker.metrics.ToolCounts = make(map[string]int)
+					}
+					tracker.metrics.ToolCounts[name]++
+				}
 			}
 		}
 
 		// Sum tokens from usage
 		usage, _ := msg["usage"].(map[string]interface{})
 		if usage != nil {
-			input := toInt64(usage["input_tokens"]) + toInt64(usage["cache_creation_input_tokens"]) + toInt64(usage["cache_read_input_tokens"])
+			cacheRead := toInt64(usage["cache_read_input_tokens"])
+			input := toInt64(usage["input_tokens"]) + toInt64(usage["cache_creation_input_tokens"])
 			output := toInt64(usage["output_tokens"])
 			tracker.metrics.InputTokens += input
+			tracker.metrics.CacheReadInputTokens += cacheRead
 			tracker.metrics.OutputTokens += output
-			tracker.metrics.TotalTokens += input + output
+			tracker.metrics.TotalTokens += input + cacheRead + output
 		}
 	}
 }
@@ -1342,6 +1411,59 @@ func generateSummary(userTexts []string, timeout time.Duration) string {
 		text = text[:147] + "..."
 	}
 	return text
+}
+
+// toolEntry represents a single tool in the top-tools list.
+type toolEntry struct {
+	Name    string `json:"name"`
+	Count   int    `json:"count"`
+	Display string `json:"display"`
+}
+
+// cleanToolName shortens MCP tool names for display.
+// "mcp__claude_ai_Linear__update_issue" → "Linear: update_issue"
+// "Read" → "Read" (unchanged)
+func cleanToolName(name string) string {
+	parts := strings.Split(name, "__")
+	if len(parts) >= 3 && parts[0] == "mcp" {
+		// MCP pattern: mcp__<provider>__<action>
+		// Extract service name: last capitalized word from provider segment
+		// e.g. "claude_ai_Linear" → "Linear"
+		provider := parts[1]
+		providerParts := strings.Split(provider, "_")
+		service := providerParts[len(providerParts)-1]
+		action := strings.Join(parts[2:], "__")
+		return service + ": " + action
+	}
+	return name
+}
+
+// topTools merges tool count maps across sessions, cleans names, and returns the top N.
+func topTools(maps []map[string]int, n int) []toolEntry {
+	merged := make(map[string]int)
+	for _, m := range maps {
+		for name, count := range m {
+			merged[name] += count
+		}
+	}
+
+	entries := make([]toolEntry, 0, len(merged))
+	for name, count := range merged {
+		entries = append(entries, toolEntry{
+			Name:    name,
+			Count:   count,
+			Display: cleanToolName(name),
+		})
+	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].Count > entries[j].Count
+	})
+
+	if len(entries) > n {
+		entries = entries[:n]
+	}
+	return entries
 }
 
 func toInt64(v interface{}) int64 {
