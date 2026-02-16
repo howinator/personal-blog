@@ -25,7 +25,7 @@ jobs:
               - '.golangci.yml'
               - '.github/workflows/ci.yml'
             js:
-              - 'assets/js/**'
+              - 'site/assets/js/**'
               - 'package.json'
               - 'package-lock.json'
               - 'vitest.config.js'
