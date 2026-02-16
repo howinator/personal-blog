@@ -41,20 +41,20 @@ type hookPayload struct {
 }
 
 type sessionMetrics struct {
-	SessionID            string `json:"session_id"`
-	TotalTokens          int64  `json:"total_tokens"`
-	InputTokens          int64  `json:"input_tokens"`
-	CacheReadInputTokens int64  `json:"cache_read_input_tokens"`
-	OutputTokens         int64  `json:"output_tokens"`
-	ToolCalls            int              `json:"tool_calls"`
-	ToolCounts           map[string]int   `json:"tool_counts,omitempty"`
-	UserPrompts          int    `json:"user_prompts"`
-	ActiveTime           int    `json:"active_time_seconds"`
-	LastPrompt           string `json:"last_prompt"`
-	Project              string `json:"project"`
-	Model                string `json:"model"`
-	Sensitive            bool   `json:"sensitive"`
-	Summary              string `json:"summary"`
+	SessionID            string         `json:"session_id"`
+	TotalTokens          int64          `json:"total_tokens"`
+	InputTokens          int64          `json:"input_tokens"`
+	CacheReadInputTokens int64          `json:"cache_read_input_tokens"`
+	OutputTokens         int64          `json:"output_tokens"`
+	ToolCalls            int            `json:"tool_calls"`
+	ToolCounts           map[string]int `json:"tool_counts,omitempty"`
+	UserPrompts          int            `json:"user_prompts"`
+	ActiveTime           int            `json:"active_time_seconds"`
+	LastPrompt           string         `json:"last_prompt"`
+	Project              string         `json:"project"`
+	Model                string         `json:"model"`
+	Sensitive            bool           `json:"sensitive"`
+	Summary              string         `json:"summary"`
 }
 
 type fileTracker struct {
@@ -615,41 +615,41 @@ func discoverTranscripts() []string {
 
 // sessionExport matches the exact JSON schema expected by Hugo's cc-sessions shortcode.
 type sessionExport struct {
-	SessionID                    string `json:"session_id"`
-	Date                         string `json:"date"`
-	DateDisplay                  string `json:"date_display"`
-	Summary                      string `json:"summary"`
-	Project                      string `json:"project"`
-	Cwd                          string `json:"cwd"`
-	NumUserPrompts               int    `json:"num_user_prompts"`
-	NumToolCalls                 int    `json:"num_tool_calls"`
-	TotalInputTokens             int64  `json:"total_input_tokens"`
-	TotalCacheReadInputTokens    int64  `json:"total_cache_read_input_tokens"`
-	TotalCacheReadTokensDisplay  string `json:"total_cache_read_tokens_display"`
-	TotalOutputTokens            int64  `json:"total_output_tokens"`
-	TotalTokens                  int64  `json:"total_tokens"`
-	TotalTokensDisplay           string `json:"total_tokens_display"`
-	TotalTokensDisplayShort      string `json:"total_tokens_display_short"`
-	ActiveTimeSeconds            int    `json:"active_time_seconds"`
-	ActiveTimeDisplay            string `json:"active_time_display"`
-	CcVersion                    string `json:"cc_version"`
+	SessionID                   string `json:"session_id"`
+	Date                        string `json:"date"`
+	DateDisplay                 string `json:"date_display"`
+	Summary                     string `json:"summary"`
+	Project                     string `json:"project"`
+	Cwd                         string `json:"cwd"`
+	NumUserPrompts              int    `json:"num_user_prompts"`
+	NumToolCalls                int    `json:"num_tool_calls"`
+	TotalInputTokens            int64  `json:"total_input_tokens"`
+	TotalCacheReadInputTokens   int64  `json:"total_cache_read_input_tokens"`
+	TotalCacheReadTokensDisplay string `json:"total_cache_read_tokens_display"`
+	TotalOutputTokens           int64  `json:"total_output_tokens"`
+	TotalTokens                 int64  `json:"total_tokens"`
+	TotalTokensDisplay          string `json:"total_tokens_display"`
+	TotalTokensDisplayShort     string `json:"total_tokens_display_short"`
+	ActiveTimeSeconds           int    `json:"active_time_seconds"`
+	ActiveTimeDisplay           string `json:"active_time_display"`
+	CcVersion                   string `json:"cc_version"`
 }
 
 type totalsExport struct {
-	SessionCount                 int    `json:"session_count"`
-	TotalTokens                  int64  `json:"total_tokens"`
-	TotalTokensDisplay           string `json:"total_tokens_display"`
-	TotalTokensDisplayShort      string `json:"total_tokens_display_short"`
-	TotalInputTokens             int64  `json:"total_input_tokens"`
-	TotalInputTokensDisplay      string `json:"total_input_tokens_display"`
-	TotalCacheReadInputTokens    int64  `json:"total_cache_read_input_tokens"`
-	TotalCacheReadTokensDisplay  string `json:"total_cache_read_tokens_display"`
-	TotalOutputTokens            int64  `json:"total_output_tokens"`
-	TotalOutputTokensDisplay     string `json:"total_output_tokens_display"`
-	TotalToolCalls               int    `json:"total_tool_calls"`
-	TotalActiveTimeSeconds       int          `json:"total_active_time_seconds"`
-	TotalActiveTimeDisplay       string       `json:"total_active_time_display"`
-	TopTools                     []toolEntry  `json:"top_tools"`
+	SessionCount                int         `json:"session_count"`
+	TotalTokens                 int64       `json:"total_tokens"`
+	TotalTokensDisplay          string      `json:"total_tokens_display"`
+	TotalTokensDisplayShort     string      `json:"total_tokens_display_short"`
+	TotalInputTokens            int64       `json:"total_input_tokens"`
+	TotalInputTokensDisplay     string      `json:"total_input_tokens_display"`
+	TotalCacheReadInputTokens   int64       `json:"total_cache_read_input_tokens"`
+	TotalCacheReadTokensDisplay string      `json:"total_cache_read_tokens_display"`
+	TotalOutputTokens           int64       `json:"total_output_tokens"`
+	TotalOutputTokensDisplay    string      `json:"total_output_tokens_display"`
+	TotalToolCalls              int         `json:"total_tool_calls"`
+	TotalActiveTimeSeconds      int         `json:"total_active_time_seconds"`
+	TotalActiveTimeDisplay      string      `json:"total_active_time_display"`
+	TopTools                    []toolEntry `json:"top_tools"`
 }
 
 type dataExport struct {
