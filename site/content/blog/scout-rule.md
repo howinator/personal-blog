@@ -25,7 +25,7 @@ Before agentic coding, I'd always tell my team "boy scout rule applies to the co
 ![Effort to fix a bug over time](/img/charts/fix-bug-effort.svg)
 
 This is a subtle shift in thinking.
-Instead of letting the priority of bugs being the highest order bit for determining what to work on, it now often makes sense to make the last thing you worked on drive the bugs you pick up.
+Instead of letting the priority of bugs be the highest order bit for determining what to work on, it now often makes sense to make the last thing you worked on drive the bugs you pick up.
 
 
 Say what you want about agentic coding, but there's no denying the strike zone is when you, the human, have full context about the code that's being changed.
