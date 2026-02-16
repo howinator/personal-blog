@@ -8,3 +8,5 @@ __pycache__/
 .venv/
 data/cc_sessions.json
 node_modules/
+*.swp
+
