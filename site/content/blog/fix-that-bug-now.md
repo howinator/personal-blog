@@ -12,6 +12,7 @@ So, being the optimist I am, I tag Cursor or open a Claude Code session, pulling
 
 But then what? The agent submits a PR with a description that's somewhat believable but also a little sus and I'm stuck with a 200-line PR that takes me a couple hours to verify in the best case.
 At worst, I'm _that guy_ with 12 open draft PRs just sitting there in the Pull Requests tab.
+
 In fact, there are times when these LLM-created bug fixes take significantly longer to fix the bug than if I had done it myself. 
 These cases are often because I'll spend time verifying the PR before realizing the model was just completely wrong about the solution, so I'm down an hour and back at square one.
 
