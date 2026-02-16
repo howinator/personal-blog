@@ -101,6 +101,7 @@ Go WebSocket sidecar that shows a live status dot in the nav when a Claude Code 
 **Sensitive sessions:** Start with `CC_LIVE_SENSITIVE=1 claude` to redact prompts. The live dot and metrics still work, but the displayed prompt is replaced with random noise of the same length. Redaction happens in the daemon before the heartbeat is sent — the real prompt never leaves the laptop. Per-session flag stored in SQLite, so concurrent sessions can mix sensitive and normal.
 
 **Debugging:** See `services/cc-live/debugging.md` for known issues (SQLITE_BUSY on hooks, zombie sessions, scientific notation, typewriter replay).
+Any new bugs should be added here with an explanation.
 
 ## Claude Code Session Stats
 
