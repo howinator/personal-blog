@@ -10,6 +10,8 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
+      go: ${{ steps.filter.outputs.go }}
+      js: ${{ steps.filter.outputs.js }}
       integration: ${{ steps.filter.outputs.integration }}
     steps:
       - uses: actions/checkout@v4
@@ -17,15 +19,29 @@ jobs:
         id: filter
         with:
           filters: |
+            go:
+              - 'services/cc-live/**'
+              - 'scripts/cc-live/**'
+              - '.golangci.yml'
+              - '.github/workflows/ci.yml'
+            js:
+              - 'site/assets/js/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'vitest.config.js'
+              - '.github/workflows/ci.yml'
             integration:
               - 'services/cc-live/**'
               - 'scripts/cc-live/**'
               - 'site/assets/js/**'
               - 'tests/integration/**'
               - 'compose.test.yaml'
+              - '.github/workflows/ci.yml'
 
   lint-go:
     runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.go == 'true'
     strategy:
       matrix:
         module: [services/cc-live, scripts/cc-live]
@@ -41,6 +57,8 @@ jobs:
 
   test-go:
     runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.go == 'true'
     strategy:
       matrix:
         module: [services/cc-live, scripts/cc-live]
@@ -54,6 +72,8 @@ jobs:
 
   test-js:
     runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.js == 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -65,7 +85,10 @@ jobs:
   integration:
     runs-on: ubuntu-latest
     needs: [changes, test-go]
-    if: needs.changes.outputs.integration == 'true'
+    if: |
+      always() &&
+      needs.changes.outputs.integration == 'true' &&
+      (needs.test-go.result == 'success' || needs.test-go.result == 'skipped')
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -79,3 +102,22 @@ jobs:
           CC_LIVE_TEST_API_KEY: test-secret
       - if: always()
         run: docker compose -f compose.test.yaml down
+
+  ci:
+    runs-on: ubuntu-latest
+    needs: [lint-go, test-go, test-js, integration]
+    if: always()
+    steps:
+      - run: |
+          results=(
+            "${{ needs.lint-go.result }}"
+            "${{ needs.test-go.result }}"
+            "${{ needs.test-js.result }}"
+            "${{ needs.integration.result }}"
+          )
+          for r in "${results[@]}"; do
+            if [[ "$r" != "success" && "$r" != "skipped" ]]; then
+              echo "CI failed: job result was '$r'"
+              exit 1
+            fi
+          done
