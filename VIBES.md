@@ -2,7 +2,7 @@
 
 This document defines the visual identity, design language, and aesthetic of howinator.io. Use it as the source of truth when building new components or modifying existing ones. Any new UI should feel like it belongs here — no imported frameworks, no utility classes, just handcrafted CSS that matches the parchment-and-forest palette.
 
-To preview the site locally, see `AGENTS.md` for dev server setup (`make dev` → `http://localhost:8004`).
+To preview the site locally, run `make dev-static` to start a Hugo dev server (includes drafts) at `http://localhost:1313`. For the full stack (blog + cc-live + Traefik), see `AGENTS.md` for `make dev` → `http://localhost:8004`. When vibe-checking, prefer `make dev-static` — it's faster and doesn't require container builds.
 
 ## The Vibe
 
