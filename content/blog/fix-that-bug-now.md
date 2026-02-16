@@ -8,22 +8,20 @@ slug: "fix-that-bug-now"
 ---
 
 In the AI age, I've noticed that I often see bugs in our backlog and think, "Hm I think I know enough about this bug to point an agent in the right direction here, but like generously 50% sure."
-So, being the optimist I am, I tag cursor or open a claude code session, pulling in the context of the ticket and pointing toward how I think it should be fixed.
+So, being the optimist I am, I tag Cursor or open a Claude Code session, pulling in the context of the ticket and pointing toward how I think it should be fixed.
 
-But then what? The agent submits a PR with a description that's somewhat believable but also a little sus and I'm stuck with a 200 line PR that takes me a couple hours to verify.
-In fact, there are times where it takes me significantly longer because I dig into the PR and find out that the agent completely missed the point and now I wasted hours on a cold lead.
+But then what? The agent submits a PR with a description that's somewhat believable but also a little sus and I'm stuck with a 200-line PR that takes me a couple hours to verify in the best case.
+At worst, I'm _that guy_ with 12 open draft PRs just sitting there in the Pull Requests tab.
+In fact, there are times when these LLM-created bug fixes take significantly longer to fix the bug than if I had done it myself. 
+These cases are often because I'll spend time verifying the PR before realizing the model was just completely wrong about the solution, so I'm down an hour and back at square one.
 
-Instead, I've shifted to a mental model where, when I'm working in an area of the codebase and the context cache is hot, I will search our issue tracker for bugs related to this area of the codebase.
+Instead, I've shifted to a mental model where, when I'm working in an area of the codebase and the context cache is hot, I will search our issue tracker for bugs related to that area of the code.
 With a lot of context about the code, it's trivial for me to kick off three agents for three bugs that have a ~95% hit rate.
 
 Before agentic coding, I'd always tell my team "boy scout rule applies to the codebase," but those were often empty words since deadlines mattered and drafting a PR for a bug fix took time.
 
-The chart below is how I now see effort vs. time on bug fixes when working in some part of the codebase.
-
 ![Effort to fix a bug over time](/img/charts/fix-bug-effort.svg)
 
-By actively looking for bugs related to your mental warm cache, you can be so much more effective with AI agents, so just fix that bug while you have the context to verify the fix.
 
-In other words, don't let the backlog drive your bugfixing.
-Instead, let your current work drive your grooming.
-
+Say what you want about agentic coding, but there's no denying the strike zone is when you, the human, have full context about the code that's being changed.
+Since the cost of prompting is so low, be a good scout and fix those unrelated bugs while you can!
