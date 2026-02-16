@@ -5,6 +5,7 @@ draft: false
 categories: ['']
 tags: ['swe']
 slug: "scout-rule"
+image: "/img/charts/fix-bug-effort.png"
 ---
 
 In the AI age, I've noticed that I often see bugs in our backlog and think, "Hm I think I know enough about this bug to point an agent in the right direction here, but like generously 50% sure."

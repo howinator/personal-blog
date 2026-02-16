@@ -8,7 +8,7 @@ HOMESERVER_DIR ?= ../homeserver
         build-cc-live push-cc-live deploy-cc-live \
         build-daemon restart-daemon reset-daemon sync \
         build-all push-all deploy-all \
-        dev dev-down dev-heartbeat \
+        dev-static dev dev-down dev-heartbeat \
         test test-go test-js lint lint-go test-integration \
         sync-plots
 
@@ -75,6 +75,9 @@ deploy-all: push-all
 
 login:
 	podman login $(REGISTRY)
+
+dev-static:
+	hugo server -s site
 
 dev:
 	docker compose up --build
