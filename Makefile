@@ -10,7 +10,8 @@ HOMESERVER_DIR ?= ../homeserver
         build-all push-all deploy-all \
         dev-static dev dev-down dev-heartbeat \
         test test-go test-js lint lint-go test-integration \
-        sync-plots
+        sync-plots \
+        maintenance-on maintenance-off
 
 # --- Blog ---
 
@@ -110,6 +111,14 @@ test-integration:
 	docker compose -f compose.test.yaml up -d --build --wait
 	cd tests/integration && CC_LIVE_TEST_URL=http://localhost:18080 CC_LIVE_TEST_API_KEY=test-secret go test -race -v ./... ; \
 	  status=$$? ; docker compose -f compose.test.yaml down ; exit $$status
+# --- Maintenance mode ---
+
+maintenance-on:
+	./scripts/maintenance.sh on
+
+maintenance-off:
+	./scripts/maintenance.sh off
+
 # --- Plots ---
 
 sync-plots:
