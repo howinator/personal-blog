@@ -1,10 +1,10 @@
 ---
-title: "Agency"
+title: "Trust Issues"
 date: 2026-02-19T21:04:23-08:00
 draft: false
 categories: ['']
 tags: ['swe', 'ai']
-slug: "agency"
+slug: "trust-issues"
 ---
 
 Everyone with a keyboard on Twitter nowadays is deliberating the last bulwark of human value in an AI world.
