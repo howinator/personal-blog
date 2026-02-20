@@ -2,7 +2,7 @@ REGISTRY ?= zot.ui.sparky.best
 BLOG_IMAGE := $(REGISTRY)/personal-blog
 CC_LIVE_IMAGE := $(REGISTRY)/cc-live
 SHA := $(shell git rev-parse --short HEAD)
-HOMESERVER_DIR ?= ../homeserver
+HOMESERVER_DIR ?= ../homeserver/hosting
 
 .PHONY: build push login deploy \
         build-cc-live push-cc-live deploy-cc-live \
