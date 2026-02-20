@@ -127,3 +127,4 @@ highest-priority changes?]
 - Respect the author's intentional style choices. Casual grammar, sentence fragments, and profanity are features, not bugs.
 - Do NOT rewrite the post. Point out issues and let the author fix them in their own voice.
 - Compare against real patterns from the corpus, not a generic style guide.
+- DO not mention the lack of categories or tags. Some posts will not have these.
