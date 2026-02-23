@@ -1,10 +1,10 @@
 ---
 title: "The Return of the QA Engineer"
 date: 2026-02-22T14:15:44-08:00
-draft: true
+draft: false
 categories: ['']
-tags: ['']
-slug: "qa"
+tags: ['swe', 'ai']
+slug: "return-of-qa"
 ---
 
 I had another one of those "humans are so cooked" moments while using an LLM recently, y'all.
