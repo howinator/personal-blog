@@ -590,15 +590,15 @@ img {
 /* --- LLM Disclaimer (deliberately off-brand) --- */
 .llm-warning {
   margin-top: 3rem;
-  border: 2px solid #000;
-  background: #fff;
+  border: 2px solid var(--text);
+  background: var(--surface);
   font-family: Arial, Helvetica, sans-serif;
   max-width: var(--content-width);
 }
 
 .llm-warning-header {
-  background: #000;
-  color: #fff;
+  background: var(--text);
+  color: var(--bg);
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -612,7 +612,7 @@ img {
 .llm-warning-text {
   font-size: 0.75rem;
   line-height: 1.5;
-  color: #000;
+  color: var(--text);
   padding: 0.5rem 0.6rem;
   margin: 0;
 }
