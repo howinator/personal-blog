@@ -587,6 +587,36 @@ img {
   white-space: nowrap;
 }
 
+/* --- LLM Disclaimer (deliberately off-brand) --- */
+.llm-warning {
+  margin-top: 3rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-family: Arial, Helvetica, sans-serif;
+  max-width: var(--content-width);
+}
+
+.llm-warning-header {
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 0.3rem 0.6rem;
+}
+
+.llm-warning-icon {
+  color: #f5c518;
+}
+
+.llm-warning-text {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--text);
+  padding: 0.5rem 0.6rem;
+  margin: 0;
+}
+
 /* --- Footer --- */
 .site-footer {
   border-top: 2px solid var(--accent);
