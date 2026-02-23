@@ -46,13 +46,20 @@ The sandbox was his QA env for that project.
 The guardrails were my professionalism as a SWE.
 And the value function was "fix these 5 scenarios."
 
-After this experience with an agentic coding tool, I have to wonder if the lowly QA engineer, who has been removed from just about every org chart, is about to make a massive comeback.
-At the very least, I think it would behoove every software team to start investing in their integration and e2e test frameworks so that verifying the "outer loop" of agentic coding is extremely easy.
-
 I see a lot of people (including me) working on sandboxes for agents, but I don't see the same fervor for new verification primitives.
 Taking that a step further, I really think the SDLC 2.0 will be defined by the outer and inner loops of verification while the sandbox will be a small commoditized piece in that story.
 
-Put another way, working on agentic software verification really seems like where the alpha is long-term.
-I have zero evidence for this, purely intuition, but I suspect the person or org who combines QA engineering, formal verification, and data science wins here.
+Put another way, my non-consensus, but probably right investment thesis is that a sharp QA engineer is probably the highest ROI hire in tech right now.
 
-Personally, I would love to hire a sharp QA engineer to see if this thesis holds any water, but it'd be great if someone (maybe you!) made the leap first and reported back.
+Let me put y'all on game about this (yes, I'm quoting Kendrick Lamar in a post about software engineering, deal with it).
+A problem I see now is that AI PRs are getting bunched up in review because we're trying to apply the SDLC playbook of 2015 to 2026 and it simply doesn't work.
+With the volume of code that is being generated, it would take an immense amount of time to verify it all for correctness.
+This must be automated.
+
+When I asked Claude to compile that Linux kernel so that it would boot how I wanted it to, I didn't care one lick about the contents of the shell scripts.
+I only cared that the verification script that I wrote printed "Test Succeeded."
+The agent was able to run fast because of the sandbox and I was able to move fast because of the formalized success criteria.
+This is the future.
+
+I'd bet almost anything that if a sharp QA engineer came into a team with some mix of SDET practices, formal verification and data science/statistical analysis, they would accelerate a team far more than the marginal SWE hire.
+
