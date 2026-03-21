@@ -361,13 +361,12 @@
   }
 
   function renderLiveSession(session) {
-    // Check if this session already has a static card
+    // Hide any matching static card and always create a live card at the top
     var staticCard = document.querySelector('[data-session-id="' + session.session_id + '"]');
     if (staticCard) {
-      enhanceStaticCard(staticCard, session);
-    } else {
-      createLiveCard(session);
+      staticCard.style.display = 'none';
     }
+    createLiveCard(session);
   }
 
   function typewriterAnimate(el, text) {
@@ -411,10 +410,10 @@
       delete typewriterTimers[timerId];
     }
 
-    // Revert enhanced static card
+    // Un-hide static card
     var staticCard = document.querySelector('[data-session-id="' + sessionId + '"]');
-    if (staticCard && staticCard.classList.contains('cc-session-live')) {
-      revertStaticCard(staticCard);
+    if (staticCard) {
+      staticCard.style.display = '';
     }
 
     // Remove standalone live card
@@ -443,6 +442,8 @@
     var currentIds = {};
     for (var i = 0; i < data.sessions.length; i++) {
       var sess = data.sessions[i];
+      // Skip null sessions (no tokens, no prompts, no summary)
+      if (!sess.total_tokens && !sess.user_prompts && !sess.summary) continue;
       currentIds[sess.session_id] = true;
       liveSessions[sess.session_id] = sess;
       renderLiveSession(sess);

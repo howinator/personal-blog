@@ -885,7 +885,10 @@ func checkSessions(db *sql.DB, timeout time.Duration, trackers map[string]*fileT
 		tracker.metrics.Sensitive = isSensitive
 
 		if transcriptPath == "" {
-			// No transcript path — can't check activity, assume active with zero metrics
+			// No transcript path — skip if no meaningful activity yet
+			if tracker.metrics.UserPrompts == 0 && tracker.metrics.TotalTokens == 0 {
+				continue
+			}
 			tracker.metrics.Project = project
 			tracker.metrics.Model = model
 			metrics = append(metrics, tracker.metrics)
