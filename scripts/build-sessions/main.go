@@ -165,6 +165,11 @@ func main() {
 		}
 	}
 
+	// Sort sessions by date descending (newest first)
+	sort.Slice(exports, func(i, j int) bool {
+		return exports[i].Date > exports[j].Date
+	})
+
 	data := dataExport{
 		Sessions: exports,
 		Totals: totalsExport{
