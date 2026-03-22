@@ -11,6 +11,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -98,20 +99,27 @@ func main() {
 		req.Header.Set("Authorization", "Bearer "+cfg.APIKey)
 		req.Header.Set("Content-Type", "application/json")
 
-		client := &http.Client{Timeout: 30 * time.Second}
+		client := &http.Client{
+			Timeout: 30 * time.Second,
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse // don't follow redirects
+			},
+		}
 		resp, err := client.Do(req)
 		if err != nil {
 			log.Printf("ERROR sending batch %d-%d: %v", i, end, err)
 			failed += len(batch)
 			continue
 		}
-		resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
-			log.Printf("ERROR batch %d-%d: API returned status %d", i, end, resp.StatusCode)
+			respBody, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			log.Printf("ERROR batch %d-%d: API returned status %d, body: %s, url: %s", i, end, resp.StatusCode, string(respBody), req.URL.String())
 			failed += len(batch)
 			continue
 		}
+		resp.Body.Close()
 
 		sent += len(batch)
 		log.Printf("sent batch %d-%d (%d/%d)", i, end, sent, len(sessions))
@@ -141,7 +149,7 @@ func loadConfig() claugAuthConfig {
 		log.Fatalf("no api_key found in %s", authFile)
 	}
 	if cfg.Endpoint == "" {
-		cfg.Endpoint = "https://claug.ai"
+		cfg.Endpoint = "https://api.claug.ai"
 	}
 
 	return cfg
@@ -199,7 +207,7 @@ func readSQLiteSessions() []sessionMetrics {
 			continue
 		}
 
-		privacyLevel := "full_context"
+		privacyLevel := "full"
 		if sensitive == 1 {
 			privacyLevel = "metrics_only"
 		}

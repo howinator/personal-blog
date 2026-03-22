@@ -79,7 +79,7 @@ make dev-down         # Tear down local stack
 Live session status is powered by the standalone [claug](https://claug.ai) app. The blog connects to claug's public WebSocket to show a live status dot in the nav when a Claude Code session is active.
 
 **Components:**
-- `site/assets/js/live-status.js` — Browser WebSocket client (connects to `wss://claug.ai/ws/live/public`)
+- `site/assets/js/live-status.js` — Browser WebSocket client (connects to `wss://api.claug.ai/ws/live/public`)
 - `site/layouts/shortcodes/cc-status-dot.html` — Inline status dot shortcode
 - `site/layouts/shortcodes/cc-sessions.html` — Session history display (reads `site/data/cc_sessions.json`)
 - `scripts/build-sessions/main.go` — Build-time script that fetches sessions from claug API

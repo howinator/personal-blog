@@ -102,7 +102,7 @@ type dataExport struct {
 }
 
 const (
-	defaultEndpoint = "https://claug.ai"
+	defaultEndpoint = "https://api.claug.ai"
 	perPage         = 100
 	// Only export sessions from this date forward (matches cc-live behavior)
 	fromDate = "2026-02-07T00:00:00Z"
