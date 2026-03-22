@@ -53,55 +53,51 @@ hugo server -s site       # Local dev server (published posts only)
 hugo -s site              # Build static site into site/public/
 ```
 
-The full local dev stack (blog + cc-live + Traefik) is available at `http://localhost:8004` via `make dev`.
+The full local dev stack (blog + Traefik) is available at `http://localhost:8004` via `make dev`.
 
 ## Container Build & Deploy
 
 Uses Podman for builds and a Zot registry. Managed via Makefile:
 
 ```bash
-make build            # Build blog image
+make build            # Sync sessions from claug API + build blog image
 make push             # Build + push blog
 make deploy           # Build + push blog + pulumi up
 
-make build-cc-live    # Build cc-live image
-make deploy-cc-live   # Build + push cc-live + pulumi up
-
-make deploy-all       # Deploy blog + cc-live together
+make sync             # Fetch sessions from claug API → site/data/cc_sessions.json
 
 make dev              # Local dev stack (docker compose) → http://localhost:8004
-make dev-heartbeat    # Test heartbeat locally
 make dev-down         # Tear down local stack
 ```
 
-- **Registry**: `zot.ui.sparky.best/{personal-blog,cc-live}`
+- **Registry**: `zot.ui.sparky.best/personal-blog`
 - **Platform**: `linux/amd64`
 - **Infra**: Pulumi IaC in `~/projects/homeserver`
 
-## Live Status System (cc-live)
+## Live Status System (claug)
 
-Go WebSocket sidecar that shows a live status dot in the nav when a Claude Code session is active. See `services/cc-live/AGENTS.md` for full details.
+Live session status is powered by the standalone [claug](https://claug.ai) app. The blog connects to claug's public WebSocket to show a live status dot in the nav when a Claude Code session is active.
 
 **Components:**
-- `services/cc-live/` — Go WebSocket service (server-side)
-- `scripts/cc-live/` — Heartbeat daemon scripts (client-side, triggered by Claude Code hooks)
-- `site/assets/js/live-status.js` — Browser WebSocket client (~30 lines)
+- `site/assets/js/live-status.js` — Browser WebSocket client (connects to `wss://api.claug.ai/ws/live/public`)
 - `site/layouts/shortcodes/cc-status-dot.html` — Inline status dot shortcode
+- `site/layouts/shortcodes/cc-sessions.html` — Session history display (reads `site/data/cc_sessions.json`)
+- `scripts/build-sessions/main.go` — Build-time script that fetches sessions from claug API
+
+**WebSocket URL** is configured in `site/config.toml` under `[params] claugWsUrl` and emitted as a `data-claug-ws` attribute in the nav template.
 
 **Claude Code hooks** (`~/.claude/settings.json`):
-- `SessionStart` → `cc-live-daemon register` (registers session, starts daemon)
-- `SessionEnd` → `cc-live-daemon unregister` (removes session, stops daemon if none left)
+- `SessionStart` → `claug start` (registers session, starts daemon)
+- `SessionEnd` → `claug stop` (removes session, stops daemon if none left)
 
-**Daemon Makefile targets:**
-- `make build-daemon` — compile daemon binary to `~/.cc-live/`
-- `make restart-daemon` — build + kill old daemon (auto-restarts on next hook)
-- `make reset-daemon` — build + kill + wipe SQLite DB + rotate logs
-- `make sync` — build daemon + run sync (reparse all transcripts → SQLite → JSON)
+**Privacy:** Controlled via claug's privacy levels (`full_context`, `metrics_only`, `private`). The `metrics_only` level maps to the old "sensitive" behavior — metrics still show but prompts are hidden.
 
-**Sensitive sessions:** Start with `CC_LIVE_SENSITIVE=1 claude` to redact prompts. The live dot and metrics still work, but the displayed prompt is replaced with random noise of the same length. Redaction happens in the daemon before the heartbeat is sent — the real prompt never leaves the laptop. Per-session flag stored in SQLite, so concurrent sessions can mix sensitive and normal.
+## Session Stats (Build-Time Sync)
 
-**Debugging:** See `services/cc-live/debugging.md` for known issues (SQLITE_BUSY on hooks, zombie sessions, scientific notation, typewriter replay).
+Session history is fetched from the claug API at build time by `scripts/build-sessions/main.go`. This script:
+1. Reads the claug API key from `~/.config/claug/auth.json`
+2. Paginates through `GET /api/sessions` to fetch all historical sessions
+3. Computes aggregated totals (token counts, tool breakdowns, active time)
+4. Writes `site/data/cc_sessions.json` for Hugo templates
 
-## Claude Code Session Stats
-
-Session stats are managed by the cc-live daemon's `sync` subcommand. `cc-live-daemon sync` reparses all transcripts from `~/.claude/projects/` into the `session_stats` SQLite table, generates LLM summaries via the Anthropic API, and exports `site/data/cc_sessions.json` for Hugo. The `make build` target runs `make sync` automatically before the container build. During live sessions, the daemon also persists metrics and generates summaries in real-time.
+`make build` runs `make sync` automatically before the container build. If the API key is missing or expired, run `claug login` to re-authenticate.

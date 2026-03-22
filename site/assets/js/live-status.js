@@ -2,7 +2,12 @@
   var dots = document.querySelectorAll('.cc-status-dot');
   if (!dots.length) return;
 
-  var wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/live';
+  // Read WebSocket URL from Hugo param (data attribute on nav dot) or fall back to same-origin
+  var wsUrlEl = document.querySelector('[data-claug-ws]');
+  var wsUrl = wsUrlEl ? wsUrlEl.getAttribute('data-claug-ws') : '';
+  if (!wsUrl) {
+    wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/live';
+  }
 
   // Read base totals from data attributes (only on claude-log page)
   var baseTotals = {};
@@ -41,6 +46,10 @@
   var liveSessions = {};
   var typewriterTimers = {};
   var lastPromptSeen = {};
+
+  // Claug incremental event tracking
+  var activeSessions = {};
+  var lastHeartbeatAt = {};
 
   function setActive(active) {
     for (var i = 0; i < dots.length; i++) {
@@ -460,12 +469,61 @@
     recalcAggregates();
   }
 
+  // Synthesize a full-state message from the activeSessions map
+  function synthesizeState() {
+    var sessions = [];
+    for (var id in activeSessions) {
+      sessions.push(activeSessions[id]);
+    }
+    handleMessage({
+      active: sessions.length > 0,
+      sessions: sessions
+    });
+  }
+
+  // Client-side inactivity timeout (90s) — safety net for crashed daemons
+  setInterval(function() {
+    var now = Date.now();
+    var changed = false;
+    for (var id in activeSessions) {
+      if (now - (lastHeartbeatAt[id] || 0) > 90000) {
+        delete activeSessions[id];
+        delete lastHeartbeatAt[id];
+        changed = true;
+      }
+    }
+    if (changed) {
+      synthesizeState();
+    }
+  }, 30000);
+
   function connect() {
     var ws = new WebSocket(wsUrl);
+
     ws.onmessage = function(e) {
-      var data = JSON.parse(e.data);
-      handleMessage(data);
+      var msg = JSON.parse(e.data);
+
+      // Claug sends a "connected" event on connect — ignore it
+      if (msg.type === 'connected') return;
+
+      if (msg.type === 'heartbeat' && msg.payload) {
+        var sess = msg.payload;
+        // Map privacy_level to sensitive flag for backward compat
+        sess.sensitive = sess.privacy_level !== 'full_context';
+        activeSessions[sess.session_id] = sess;
+        lastHeartbeatAt[sess.session_id] = Date.now();
+      }
+
+      if (msg.type === 'stop' && msg.payload && msg.payload.session_ids) {
+        for (var i = 0; i < msg.payload.session_ids.length; i++) {
+          delete activeSessions[msg.payload.session_ids[i]];
+          delete lastHeartbeatAt[msg.payload.session_ids[i]];
+        }
+      }
+
+      synthesizeState();
     };
+
     ws.onclose = function() {
       setActive(false);
       // Clear live sessions on disconnect
@@ -473,6 +531,8 @@
         removeLiveSession(id);
       }
       liveSessions = {};
+      activeSessions = {};
+      lastHeartbeatAt = {};
       recalcAggregates();
       setTimeout(connect, 5000);
     };
