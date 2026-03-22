@@ -10,6 +10,7 @@ enableEmoji = true
     description = "Howie's thoughts on things"
     avatar = "headshot-v2.jpg"
     tagline = "Builder. People & Product."
+    claugWsUrl = "wss://claug.ai/ws/live/public?user=eb4265a0-f747-45b1-ae2e-3c6e801ae17f"
 
 [permalinks]
     blog = "/:year/:month/:day/:slug"
