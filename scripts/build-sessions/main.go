@@ -12,12 +12,31 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
-// claugAuthConfig matches the structure of ~/.config/claug/auth.json.
-type claugAuthConfig struct {
-	APIKey   string `json:"api_key"`
-	Endpoint string `json:"endpoint"`
+// claugAuthCredentials matches one entry in ~/.config/claug/auth.json (keyed by env name).
+type claugAuthCredentials struct {
+	Token  string `json:"token,omitempty"`
+	APIKey string `json:"api_key"`
+}
+
+// claugEnvConfig matches one entry in config.yaml's envs map.
+type claugEnvConfig struct {
+	Endpoint string `yaml:"endpoint"`
+}
+
+// claugConfig matches ~/.config/claug/config.yaml.
+type claugConfig struct {
+	Envs   map[string]claugEnvConfig `yaml:"envs"`
+	Active []string                  `yaml:"active"`
+}
+
+// resolvedConfig is the final API key + endpoint for a single environment.
+type resolvedConfig struct {
+	APIKey   string
+	Endpoint string
 }
 
 // claugSessionStats matches the JSON returned by GET /api/sessions.
@@ -111,7 +130,7 @@ const (
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	cfg := loadConfig()
+	cfg := loadResolvedConfig()
 	sessions := fetchAllSessions(cfg)
 
 	log.Printf("fetched %d sessions from claug API", len(sessions))
@@ -193,7 +212,7 @@ func main() {
 	writeExport(data)
 }
 
-func loadConfig() claugAuthConfig {
+func loadResolvedConfig() resolvedConfig {
 	configDir := os.Getenv("CLAUG_CONFIG_DIR")
 	if configDir == "" {
 		home, err := os.UserHomeDir()
@@ -203,29 +222,49 @@ func loadConfig() claugAuthConfig {
 		configDir = filepath.Join(home, ".config", "claug")
 	}
 
+	// Determine which environment to use.
+	env := os.Getenv("CLAUG_ENV")
+	if env == "" {
+		env = "prod" // default
+	}
+
+	// Load config.yaml to resolve the endpoint and optionally override env from active list.
+	configFile := filepath.Join(configDir, "config.yaml")
+	endpoint := defaultEndpoint
+	if cfgData, err := os.ReadFile(configFile); err == nil {
+		var cfg claugConfig
+		if err := yaml.Unmarshal(cfgData, &cfg); err != nil {
+			log.Fatalf("parsing %s: %v", configFile, err)
+		}
+		if envCfg, ok := cfg.Envs[env]; ok && envCfg.Endpoint != "" {
+			endpoint = envCfg.Endpoint
+		}
+	}
+
+	// Load auth.json (keyed by env name).
 	authFile := filepath.Join(configDir, "auth.json")
-	data, err := os.ReadFile(authFile)
+	authData, err := os.ReadFile(authFile)
 	if err != nil {
 		log.Fatalf("reading %s: %v\nRun 'claug login' to authenticate.", authFile, err)
 	}
 
-	var cfg claugAuthConfig
-	if err := json.Unmarshal(data, &cfg); err != nil {
+	var allCreds map[string]*claugAuthCredentials
+	if err := json.Unmarshal(authData, &allCreds); err != nil {
 		log.Fatalf("parsing %s: %v", authFile, err)
 	}
 
-	if cfg.APIKey == "" {
-		log.Fatalf("no api_key found in %s. Run 'claug login' to authenticate.", authFile)
+	creds, ok := allCreds[env]
+	if !ok || creds.APIKey == "" {
+		log.Fatalf("no api_key found for env %q in %s. Run 'claug login' to authenticate.", env, authFile)
 	}
 
-	if cfg.Endpoint == "" {
-		cfg.Endpoint = defaultEndpoint
+	return resolvedConfig{
+		APIKey:   creds.APIKey,
+		Endpoint: endpoint,
 	}
-
-	return cfg
 }
 
-func fetchAllSessions(cfg claugAuthConfig) []claugSessionStats {
+func fetchAllSessions(cfg resolvedConfig) []claugSessionStats {
 	client := &http.Client{Timeout: 30 * time.Second}
 	var allSessions []claugSessionStats
 	page := 1
