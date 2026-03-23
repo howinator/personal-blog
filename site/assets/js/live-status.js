@@ -509,7 +509,7 @@
       if (msg.type === 'heartbeat' && msg.payload) {
         var sess = msg.payload;
         // Map privacy_level to sensitive flag for backward compat
-        sess.sensitive = sess.privacy_level !== 'full_context';
+        sess.sensitive = sess.privacy_level === 'metrics_only' || sess.privacy_level === 'private';
         activeSessions[sess.session_id] = sess;
         lastHeartbeatAt[sess.session_id] = Date.now();
       }
