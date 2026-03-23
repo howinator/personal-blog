@@ -7,7 +7,20 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@bufbuild/protobuf':
+        specifier: ^2.11.0
+        version: 2.11.0
+      '@connectrpc/connect':
+        specifier: ^2.1.1
+        version: 2.1.1(@bufbuild/protobuf@2.11.0)
+      '@connectrpc/connect-web':
+        specifier: ^2.1.1
+        version: 2.1.1(@bufbuild/protobuf@2.11.0)(@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.11.0))
     devDependencies:
+      '@bufbuild/protoc-gen-es':
+        specifier: ^2.11.0
+        version: 2.11.0(@bufbuild/protobuf@2.11.0)
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0
@@ -19,6 +32,33 @@ packages:
 
   '@asamuzakjp/css-color@3.2.0':
     resolution: {integrity: sha512-K1A6z8tS3XsmCMM86xoWdn7Fkdn9m6RSVtocUrJYIwZnFVkng/PvkEoWtOWmP+Scc6saYWHWZYbndEEXxl24jw==}
+
+  '@bufbuild/protobuf@2.11.0':
+    resolution: {integrity: sha512-sBXGT13cpmPR5BMgHE6UEEfEaShh5Ror6rfN3yEK5si7QVrtZg8LEPQb0VVhiLRUslD2yLnXtnRzG035J/mZXQ==}
+
+  '@bufbuild/protoc-gen-es@2.11.0':
+    resolution: {integrity: sha512-VzQuwEQDXipbZ1soWUuAWm1Z0C3B/IDWGeysnbX6ogJ6As91C2mdvAND/ekQ4YIWgen4d5nqLfIBOWLqCCjYUA==}
+    engines: {node: '>=20'}
+    hasBin: true
+    peerDependencies:
+      '@bufbuild/protobuf': 2.11.0
+    peerDependenciesMeta:
+      '@bufbuild/protobuf':
+        optional: true
+
+  '@bufbuild/protoplugin@2.11.0':
+    resolution: {integrity: sha512-lyZVNFUHArIOt4W0+dwYBe5GBwbKzbOy8ObaloEqsw9Mmiwv2O48TwddDoHN4itylC+BaEGqFdI1W8WQt2vWJQ==}
+
+  '@connectrpc/connect-web@2.1.1':
+    resolution: {integrity: sha512-J8317Q2MaFRCT1jzVR1o06bZhDIBmU0UAzWx6xOIXzOq8+k71/+k7MUF7AwcBUX+34WIvbm5syRgC5HXQA8fOg==}
+    peerDependencies:
+      '@bufbuild/protobuf': ^2.7.0
+      '@connectrpc/connect': 2.1.1
+
+  '@connectrpc/connect@2.1.1':
+    resolution: {integrity: sha512-JzhkaTvM73m2K1URT6tv53k2RwngSmCXLZJgK580qNQOXRzZRR/BCMfZw3h+90JpnG6XksP5bYT+cz0rpUzUWQ==}
+    peerDependencies:
+      '@bufbuild/protobuf': ^2.7.0
 
   '@csstools/color-helpers@5.1.0':
     resolution: {integrity: sha512-S11EXWJyy0Mz5SYvRmY8nJYTFFd1LCNV+7cXyAgQtOOuzb4EsgfqDufL+9esx72/eLhsRdGZwaldu/h+E4t4BA==}
@@ -341,6 +381,11 @@ packages:
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
 
+  '@typescript/vfs@1.6.4':
+    resolution: {integrity: sha512-PJFXFS4ZJKiJ9Qiuix6Dz/OwEIqHD7Dme1UwZhTK11vR+5dqW2ACbdndWQexBzCx+CPuMe5WBYQWCsFyGlQLlQ==}
+    peerDependencies:
+      typescript: '*'
+
   '@vitest/expect@3.2.4':
     resolution: {integrity: sha512-Io0yyORnB6sikFlt8QW5K7slY4OjqNX9jmJQ02QDda8lyM6B5oNgVWoSoKPac8/kgnCUzuHQKrSLtu/uOqqrig==}
 
@@ -594,6 +639,11 @@ packages:
     resolution: {integrity: sha512-hdF5ZgjTqgAntKkklYw0R03MG2x/bSzTtkxmIRw/sTNV8YXsCJ1tfLAX23lhxhHJlEf3CRCOCGGWw3vI3GaSPw==}
     engines: {node: '>=18'}
 
+  typescript@5.4.5:
+    resolution: {integrity: sha512-vcI4UpRgg81oIRUFwR0WSIHKt11nJ7SAVlYNIu+QpqeyXP+gpQJy/Z4+F0aGxSE4MqwjyXvW/TzgkLAx2AGHwQ==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   vite-node@3.2.4:
     resolution: {integrity: sha512-EbKSKh+bh1E1IFxeO0pg1n4dvoOTt0UDiXMd/qn++r98+jPO1xtJilvXldeuQ8giIB5IkpjCgMleHMNEsGH6pg==}
     engines: {node: ^18.0.0 || ^20.0.0 || >=22.0.0}
@@ -721,6 +771,33 @@ snapshots:
       '@csstools/css-parser-algorithms': 3.0.5(@csstools/css-tokenizer@3.0.4)
       '@csstools/css-tokenizer': 3.0.4
       lru-cache: 10.4.3
+
+  '@bufbuild/protobuf@2.11.0': {}
+
+  '@bufbuild/protoc-gen-es@2.11.0(@bufbuild/protobuf@2.11.0)':
+    dependencies:
+      '@bufbuild/protoplugin': 2.11.0
+    optionalDependencies:
+      '@bufbuild/protobuf': 2.11.0
+    transitivePeerDependencies:
+      - supports-color
+
+  '@bufbuild/protoplugin@2.11.0':
+    dependencies:
+      '@bufbuild/protobuf': 2.11.0
+      '@typescript/vfs': 1.6.4(typescript@5.4.5)
+      typescript: 5.4.5
+    transitivePeerDependencies:
+      - supports-color
+
+  '@connectrpc/connect-web@2.1.1(@bufbuild/protobuf@2.11.0)(@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.11.0))':
+    dependencies:
+      '@bufbuild/protobuf': 2.11.0
+      '@connectrpc/connect': 2.1.1(@bufbuild/protobuf@2.11.0)
+
+  '@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.11.0)':
+    dependencies:
+      '@bufbuild/protobuf': 2.11.0
 
   '@csstools/color-helpers@5.1.0': {}
 
@@ -905,6 +982,13 @@ snapshots:
   '@types/deep-eql@4.0.2': {}
 
   '@types/estree@1.0.8': {}
+
+  '@typescript/vfs@1.6.4(typescript@5.4.5)':
+    dependencies:
+      debug: 4.4.3
+      typescript: 5.4.5
+    transitivePeerDependencies:
+      - supports-color
 
   '@vitest/expect@3.2.4':
     dependencies:
@@ -1196,6 +1280,8 @@ snapshots:
   tr46@5.1.1:
     dependencies:
       punycode: 2.3.1
+
+  typescript@5.4.5: {}
 
   vite-node@3.2.4:
     dependencies:

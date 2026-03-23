@@ -4,7 +4,7 @@ SHA := $(shell git rev-parse --short HEAD)
 HOMESERVER_DIR ?= ../homeserver/hosting
 
 .PHONY: build push login deploy \
-        sync \
+        sync generate \
         dev-static dev dev-down \
         test test-js \
         sync-plots \
@@ -12,10 +12,13 @@ HOMESERVER_DIR ?= ../homeserver/hosting
 
 # --- Blog ---
 
+generate:
+	npx buf generate
+
 sync:
 	cd scripts/build-sessions && CC_STATS_BLOG_ROOT="$$(cd ../../site && pwd)" go run .
 
-build: sync
+build: sync generate
 	podman build --platform linux/amd64 -f Containerfile -t $(BLOG_IMAGE):$(SHA) -t $(BLOG_IMAGE):latest .
 
 push: build

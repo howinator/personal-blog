@@ -1,7 +1,11 @@
-(function() {
-  var dots = document.querySelectorAll('.cc-status-dot');
-  if (!dots.length) return;
+import { createClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-web";
+import { SessionService } from "./gen/sessions/v1/sessions_pb";
 
+var dots = document.querySelectorAll('.cc-status-dot');
+if (dots.length) { init(); }
+
+function init() {
   // Read Connect API URL and user ID from Hugo params (data attributes on nav dot)
   var apiEl = document.querySelector('[data-claug-api]');
   var apiUrl = apiEl ? apiEl.getAttribute('data-claug-api') : '';
@@ -9,6 +13,9 @@
   if (!apiUrl) {
     apiUrl = location.protocol + '//' + location.host;
   }
+
+  var transport = createConnectTransport({ baseUrl: apiUrl });
+  var client = createClient(SessionService, transport);
 
   // Read base totals from data attributes (only on claude-log page)
   var baseTotals = {};
@@ -498,44 +505,28 @@
     }
   }, 30000);
 
-  // Map proto JSON camelCase fields to snake_case used by rendering code
-  function mapProtoSession(proto) {
+  // Map proto SessionMetrics to snake_case used by rendering code.
+  // Proto int64 fields are bigint — convert to Number for display math.
+  function mapProtoSession(metrics) {
     return {
-      session_id: proto.sessionId || '',
-      total_tokens: Number(proto.totalTokens) || 0,
-      input_tokens: Number(proto.inputTokens) || 0,
-      cache_read_input_tokens: Number(proto.cacheReadInputTokens) || 0,
-      output_tokens: Number(proto.outputTokens) || 0,
-      tool_calls: Number(proto.toolCalls) || 0,
-      tool_counts: proto.toolCounts || {},
-      user_prompts: Number(proto.userPrompts) || 0,
-      active_time_seconds: Number(proto.activeTimeSeconds) || 0,
-      last_prompt: proto.lastPrompt || '',
-      project: proto.project || '',
-      model: proto.model || '',
-      summary: proto.summary || '',
-      started_at: proto.startedAt || '',
-      ended_at: proto.endedAt || '',
-      privacy_level: proto.privacyLevel || '',
-      sensitive: proto.privacyLevel === 'metrics_only' || proto.privacyLevel === 'private'
+      session_id: metrics.sessionId,
+      total_tokens: Number(metrics.totalTokens),
+      input_tokens: Number(metrics.inputTokens),
+      cache_read_input_tokens: Number(metrics.cacheReadInputTokens),
+      output_tokens: Number(metrics.outputTokens),
+      tool_calls: metrics.toolCalls,
+      tool_counts: Object.assign({}, metrics.toolCounts),
+      user_prompts: metrics.userPrompts,
+      active_time_seconds: metrics.activeTimeSeconds,
+      last_prompt: metrics.lastPrompt,
+      project: metrics.project,
+      model: metrics.model,
+      summary: metrics.summary,
+      started_at: metrics.startedAt,
+      ended_at: metrics.endedAt,
+      privacy_level: metrics.privacyLevel,
+      sensitive: metrics.privacyLevel === 'metrics_only' || metrics.privacyLevel === 'private'
     };
-  }
-
-  function handleConnectEvent(event) {
-    if (event.type === 'heartbeat' && event.session) {
-      var sess = mapProtoSession(event.session);
-      activeSessions[sess.session_id] = sess;
-      lastHeartbeatAt[sess.session_id] = Date.now();
-    }
-
-    if (event.type === 'stop' && event.sessionIds) {
-      for (var i = 0; i < event.sessionIds.length; i++) {
-        delete activeSessions[event.sessionIds[i]];
-        delete lastHeartbeatAt[event.sessionIds[i]];
-      }
-    }
-
-    synthesizeState();
   }
 
   function handleDisconnect() {
@@ -550,67 +541,35 @@
     setTimeout(connect, 5000);
   }
 
-  // Parse Connect protocol binary envelopes from a streaming response.
-  // Each envelope: [flags: 1 byte][length: 4 bytes big-endian][payload: N bytes]
-  // flags 0x00 = data, 0x02 = end-of-stream trailers
-  function connect() {
-    var url = apiUrl + '/sessions.v1.SessionService/WatchSessions';
+  async function connect() {
+    try {
+      var stream = client.watchSessions({
+        scope: 'public_user',
+        userId: userId,
+      });
 
-    fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/connect+json',
-        'Connect-Protocol-Version': '1'
-      },
-      body: JSON.stringify({ scope: 'public_user', userId: userId })
-    }).then(function(response) {
-      if (!response.ok) {
-        throw new Error('HTTP ' + response.status);
-      }
-      var reader = response.body.getReader();
-      var buffer = new Uint8Array(0);
+      for await (var event of stream) {
+        if (event.type === 'heartbeat' && event.session) {
+          var sess = mapProtoSession(event.session);
+          activeSessions[sess.session_id] = sess;
+          lastHeartbeatAt[sess.session_id] = Date.now();
+        }
 
-      function read() {
-        reader.read().then(function(result) {
-          if (result.done) {
-            handleDisconnect();
-            return;
+        if (event.type === 'stop' && event.sessionIds.length > 0) {
+          for (var i = 0; i < event.sessionIds.length; i++) {
+            delete activeSessions[event.sessionIds[i]];
+            delete lastHeartbeatAt[event.sessionIds[i]];
           }
+        }
 
-          // Append chunk to buffer
-          var newBuf = new Uint8Array(buffer.length + result.value.length);
-          newBuf.set(buffer);
-          newBuf.set(result.value, buffer.length);
-          buffer = newBuf;
-
-          // Parse complete envelopes
-          while (buffer.length >= 5) {
-            var flags = buffer[0];
-            var length = (buffer[1] << 24) | (buffer[2] << 16) | (buffer[3] << 8) | buffer[4];
-
-            if (buffer.length < 5 + length) break;
-
-            var payload = buffer.slice(5, 5 + length);
-            buffer = buffer.slice(5 + length);
-
-            // flags 0x02 = end-of-stream (trailers); skip
-            if (flags & 0x02) continue;
-
-            var text = new TextDecoder().decode(payload);
-            var event = JSON.parse(text);
-            handleConnectEvent(event);
-          }
-
-          read();
-        }).catch(function() {
-          handleDisconnect();
-        });
+        synthesizeState();
       }
 
-      read();
-    }).catch(function() {
+      // Stream ended normally
       handleDisconnect();
-    });
+    } catch (e) {
+      handleDisconnect();
+    }
   }
 
   connect();
@@ -618,4 +577,4 @@
   if (typeof globalThis.__TEST__ !== 'undefined') {
     globalThis.__liveStatus = { formatTokens, formatTime, escapeHTML };
   }
-})();
+}
