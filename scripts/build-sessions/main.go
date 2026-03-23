@@ -43,11 +43,10 @@ type resolvedConfig struct {
 type claugSessionStats struct {
 	ID                        string            `json:"id"`
 	SessionID                 string            `json:"session_id"`
-	UserID                    string            `json:"user_id"`
 	Provider                  string            `json:"provider"`
 	Project                   string            `json:"project"`
 	Model                     string            `json:"model"`
-	StartedAt                 *time.Time        `json:"started_at"`
+	CreatedAt                 int64             `json:"created_at"`
 	Summary                   string            `json:"summary"`
 	LastPrompt                string            `json:"last_prompt"`
 	NumUserPrompts            int               `json:"num_user_prompts"`
@@ -60,7 +59,7 @@ type claugSessionStats struct {
 	ProviderVersion           string            `json:"provider_version"`
 	PrivacyLevel              string            `json:"privacy_level"`
 	ToolCounts                map[string]int    `json:"tool_counts"`
-	UpdatedAt                 time.Time         `json:"updated_at"`
+	UpdatedAt                 int64             `json:"updated_at"`
 }
 
 type sessionsResponse struct {
@@ -165,9 +164,10 @@ func main() {
 			CcVersion:                   s.ProviderVersion,
 		}
 
-		if s.StartedAt != nil {
-			e.Date = s.StartedAt.Format(time.RFC3339)
-			e.DateDisplay = formatDate(s.StartedAt.Format(time.RFC3339))
+		if s.CreatedAt != 0 {
+			t := time.Unix(s.CreatedAt, 0)
+			e.Date = t.Format(time.RFC3339)
+			e.DateDisplay = formatDate(t.Format(time.RFC3339))
 		}
 
 		exports = append(exports, e)
