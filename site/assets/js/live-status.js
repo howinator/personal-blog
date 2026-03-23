@@ -2,6 +2,32 @@ import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { SessionService } from "./gen/sessions/v1/sessions_pb";
 
+export function formatTokens(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+  return String(n);
+}
+
+export function formatTime(sec) {
+  if (sec < 60) return sec + 's';
+  var minutes = Math.floor(sec / 60);
+  var secs = sec % 60;
+  if (minutes < 60) {
+    return secs ? minutes + 'm ' + secs + 's' : minutes + 'm';
+  }
+  var hours = Math.floor(minutes / 60);
+  var mins = minutes % 60;
+  var parts = [hours + 'h'];
+  if (mins) parts.push(mins + 'm');
+  return parts.join(' ');
+}
+
+export function escapeHTML(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
 var dots = document.querySelectorAll('.cc-status-dot');
 if (dots.length) { init(); }
 
@@ -85,25 +111,6 @@ function init() {
     return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   }
 
-  function formatTokens(n) {
-    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-    if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
-    return String(n);
-  }
-
-  function formatTime(sec) {
-    if (sec < 60) return sec + 's';
-    var minutes = Math.floor(sec / 60);
-    var secs = sec % 60;
-    if (minutes < 60) {
-      return secs ? minutes + 'm ' + secs + 's' : minutes + 'm';
-    }
-    var hours = Math.floor(minutes / 60);
-    var mins = minutes % 60;
-    var parts = [hours + 'h'];
-    if (mins) parts.push(mins + 'm');
-    return parts.join(' ');
-  }
 
   function updateStatDisplay(el, newText) {
     if (!el) return;
@@ -411,11 +418,6 @@ function init() {
     }, 25);
   }
 
-  function escapeHTML(str) {
-    var div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
 
   function removeLiveSession(sessionId) {
     // Keep lastPromptSeen so reconnects don't re-trigger the typewriter
@@ -573,8 +575,4 @@ function init() {
   }
 
   connect();
-
-  if (typeof globalThis.__TEST__ !== 'undefined') {
-    globalThis.__liveStatus = { formatTokens, formatTime, escapeHTML };
-  }
 }

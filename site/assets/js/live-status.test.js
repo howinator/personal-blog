@@ -1,31 +1,22 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
 
-let formatTokens, formatTime, escapeHTML;
+vi.mock('@connectrpc/connect', () => ({
+  createClient: () => ({
+    watchSessions: () => ({ [Symbol.asyncIterator]: () => ({ next: () => new Promise(() => {}) }) })
+  })
+}));
+vi.mock('@connectrpc/connect-web', () => ({
+  createConnectTransport: () => ({})
+}));
+vi.mock('./gen/sessions/v1/sessions_pb', () => ({
+  SessionService: {}
+}));
 
-beforeAll(async () => {
-  // Set up minimal DOM so the init() runs
+import { formatTokens, formatTime, escapeHTML } from './live-status.js';
+
+beforeAll(() => {
+  // Set up minimal DOM so init() runs
   document.body.innerHTML = '<span class="cc-status-dot"></span>';
-
-  // Stub the connect library — createClient returns an object with watchSessions
-  // that returns a never-resolving async iterable
-  vi.mock('@connectrpc/connect', () => ({
-    createClient: () => ({
-      watchSessions: () => ({ [Symbol.asyncIterator]: () => ({ next: () => new Promise(() => {}) }) })
-    })
-  }));
-  vi.mock('@connectrpc/connect-web', () => ({
-    createConnectTransport: () => ({})
-  }));
-
-  // Signal to the script that we're in test mode
-  globalThis.__TEST__ = true;
-
-  // Dynamic import so mocks are in place first
-  await import('./live-status.js');
-
-  ({ formatTokens, formatTime, escapeHTML } = globalThis.__liveStatus);
 });
 
 describe('formatTokens', () => {
