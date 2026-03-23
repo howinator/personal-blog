@@ -3,7 +3,7 @@
 #
 # http://localhost:8004 → blog (nginx)
 #
-# Live status connects directly to claug.ai WebSocket (configured in site/config.toml).
+# Live status connects directly to claug.ai ConnectRPC streaming API (configured in site/config.toml).
 
 services:
   traefik:

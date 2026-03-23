@@ -76,15 +76,21 @@ make dev-down         # Tear down local stack
 
 ## Live Status System (claug)
 
-Live session status is powered by the standalone [claug](https://claug.ai) app. The blog connects to claug's public WebSocket to show a live status dot in the nav when a Claude Code session is active.
+Live session status is powered by the standalone [claug](https://claug.ai) app. The blog connects to claug's ConnectRPC streaming API (`WatchSessions` RPC) to show a live status dot in the nav when a Claude Code session is active.
 
 **Components:**
-- `site/assets/js/live-status.js` — Browser WebSocket client (connects to `wss://api.claug.ai/ws/live/public`)
+- `site/assets/js/live-status.js` — Browser ConnectRPC streaming client (uses `fetch` + `ReadableStream` to consume `POST /sessions.v1.SessionService/WatchSessions`)
 - `site/layouts/shortcodes/cc-status-dot.html` — Inline status dot shortcode
 - `site/layouts/shortcodes/cc-sessions.html` — Session history display (reads `site/data/cc_sessions.json`)
 - `scripts/build-sessions/main.go` — Build-time script that fetches sessions from claug API
 
-**WebSocket URL** is configured in `site/config.toml` under `[params] claugWsUrl` and emitted as a `data-claug-ws` attribute in the nav template.
+**API URL and user ID** are configured in `site/config.toml` under `[params] claugApiUrl` and `[params] claugUserId`, emitted as `data-claug-api` and `data-claug-user` attributes in the nav template.
+
+**Connect protocol details:**
+- The client sends a POST with `Content-Type: application/connect+json` and `Connect-Protocol-Version: 1`
+- Request body: `{"scope":"public_user","userId":"<user-id>"}`
+- Response is a binary-enveloped stream (5-byte header per message: 1 byte flags + 4 bytes big-endian length + JSON payload)
+- Events: `heartbeat` (with `SessionMetrics` in camelCase proto JSON) and `stop` (with `sessionIds` array)
 
 **Claude Code hooks** (`~/.claude/settings.json`):
 - `SessionStart` → `claug start` (registers session, starts daemon)

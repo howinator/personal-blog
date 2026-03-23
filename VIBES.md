@@ -254,4 +254,4 @@ uv run --project scripts/plots python scripts/plots/examples/effort_comparison.p
 | `themes/timberline/assets/css/main.css` | Base theme: palette, typography, nav, posts, archive cards, tree animations, syntax highlighting |
 | `assets/css/cc-stats.css` | Claude Code dashboard: stat boxes, session cards, live status, digit animation, typewriter |
 | `assets/css/redacted.css` | Redacted text blocks and hover tooltips |
-| `assets/js/live-status.js` | WebSocket client: live status dot, typewriter, digit roller (JS behavior, not styling) |
+| `assets/js/live-status.js` | ConnectRPC streaming client: live status dot, typewriter, digit roller (JS behavior, not styling) |

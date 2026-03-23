@@ -8,11 +8,8 @@ beforeAll(() => {
   // Set up minimal DOM so the IIFE doesn't bail early
   document.body.innerHTML = '<span class="cc-status-dot"></span>';
 
-  // Stub WebSocket so connect() doesn't throw
-  globalThis.WebSocket = class {
-    constructor() { this.onmessage = null; this.onclose = null; }
-    close() {}
-  };
+  // Stub fetch so connect() doesn't throw (returns a never-resolving stream)
+  globalThis.fetch = () => new Promise(() => {});
 
   // Signal to the script that we're in test mode
   globalThis.__TEST__ = true;
