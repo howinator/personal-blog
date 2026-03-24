@@ -12,7 +12,7 @@
     <ul class="nav-links">
       {{ range .Site.Menus.main }}
       <li>
-        <a href="{{ .URL }}">{{ .Name }}{{ if eq .Identifier "claude-log" }}<span id="cc-status" class="cc-status-dot" title="Claude Code: offline" data-claug-ws="{{ $.Site.Params.claugWsUrl }}"></span>{{ end }}</a>
+        <a href="{{ .URL }}">{{ .Name }}{{ if eq .Identifier "claude-log" }}<span id="cc-status" class="cc-status-dot" title="Claude Code: offline" data-claug-api="{{ $.Site.Params.claugApiUrl }}" data-claug-user="{{ $.Site.Params.claugUserId }}"></span>{{ end }}</a>
       </li>
       {{ end }}
     </ul>

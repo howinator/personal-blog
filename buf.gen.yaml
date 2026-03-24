@@ -1,0 +1,9 @@
+version: v2
+inputs:
+  - directory: ../claug/proto
+plugins:
+  - local: node_modules/.bin/protoc-gen-es
+    out: site/assets/js/gen
+    opt: target=ts
+managed:
+  enabled: true

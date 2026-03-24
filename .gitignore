@@ -8,5 +8,6 @@ __pycache__/
 .venv/
 site/data/cc_sessions.json
 node_modules/
+site/assets/js/gen/
 *.swp
 

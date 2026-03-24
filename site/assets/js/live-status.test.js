@@ -1,28 +1,22 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 
-let formatTokens, formatTime, escapeHTML;
+vi.mock('@connectrpc/connect', () => ({
+  createClient: () => ({
+    watchSessions: () => ({ [Symbol.asyncIterator]: () => ({ next: () => new Promise(() => {}) }) })
+  })
+}));
+vi.mock('@connectrpc/connect-web', () => ({
+  createConnectTransport: () => ({})
+}));
+vi.mock('./gen/sessions/v1/sessions_pb', () => ({
+  SessionService: {}
+}));
+
+import { formatTokens, formatTime, escapeHTML } from './live-status.js';
 
 beforeAll(() => {
-  // Set up minimal DOM so the IIFE doesn't bail early
+  // Set up minimal DOM so init() runs
   document.body.innerHTML = '<span class="cc-status-dot"></span>';
-
-  // Stub WebSocket so connect() doesn't throw
-  globalThis.WebSocket = class {
-    constructor() { this.onmessage = null; this.onclose = null; }
-    close() {}
-  };
-
-  // Signal to the script that we're in test mode
-  globalThis.__TEST__ = true;
-
-  // Evaluate the script in the jsdom context
-  const code = readFileSync(resolve(__dirname, 'live-status.js'), 'utf-8');
-  const fn = new Function(code);
-  fn();
-
-  ({ formatTokens, formatTime, escapeHTML } = globalThis.__liveStatus);
 });
 
 describe('formatTokens', () => {

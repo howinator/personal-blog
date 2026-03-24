@@ -121,5 +121,5 @@ rm -rf ~/.cc-live/
 If something goes wrong after Step 3:
 
 - **Blog shows no sessions**: Check that `claug login` was run and `~/.config/claug/auth.json` has an `api_key`. Run `make sync` manually to see errors.
-- **Live dot not working**: Check browser console for WebSocket errors. Verify claug server is running and `leaderboard_opt_in = true` for your user.
+- **Live dot not working**: Check browser console for ConnectRPC streaming errors. Verify claug server is running and `leaderboard_opt_in = true` for your user.
 - **Quick rollback**: Revert the blog to `main` branch and redeploy — cc-live hooks are still running in parallel until Step 5.

@@ -60,11 +60,12 @@ The full local dev stack (blog + Traefik) is available at `http://localhost:8004
 Uses Podman for builds and a Zot registry. Managed via Makefile:
 
 ```bash
-make build            # Sync sessions from claug API + build blog image
+make build            # Sync sessions + generate proto + build blog image
 make push             # Build + push blog
 make deploy           # Build + push blog + pulumi up
 
 make sync             # Fetch sessions from claug API → site/data/cc_sessions.json
+make generate         # Generate TS proto types from ../claug/proto via buf
 
 make dev              # Local dev stack (docker compose) → http://localhost:8004
 make dev-down         # Tear down local stack
@@ -76,15 +77,21 @@ make dev-down         # Tear down local stack
 
 ## Live Status System (claug)
 
-Live session status is powered by the standalone [claug](https://claug.ai) app. The blog connects to claug's public WebSocket to show a live status dot in the nav when a Claude Code session is active.
+Live session status is powered by the standalone [claug](https://claug.ai) app. The blog connects to claug's ConnectRPC streaming API (`WatchSessions` RPC) to show a live status dot in the nav when a Claude Code session is active.
 
 **Components:**
-- `site/assets/js/live-status.js` — Browser WebSocket client (connects to `wss://api.claug.ai/ws/live/public`)
+- `site/assets/js/live-status.js` — Browser ConnectRPC streaming client (uses `@connectrpc/connect-web` with generated proto types)
+- `site/assets/js/gen/` — Generated TypeScript proto types (from `../claug/proto` via `buf generate`)
 - `site/layouts/shortcodes/cc-status-dot.html` — Inline status dot shortcode
 - `site/layouts/shortcodes/cc-sessions.html` — Session history display (reads `site/data/cc_sessions.json`)
 - `scripts/build-sessions/main.go` — Build-time script that fetches sessions from claug API
+- `buf.gen.yaml` — Buf codegen config; points at `../claug/proto` for the proto source
 
-**WebSocket URL** is configured in `site/config.toml` under `[params] claugWsUrl` and emitted as a `data-claug-ws` attribute in the nav template.
+**API URL and user ID** are configured in `site/config.toml` under `[params] claugApiUrl` and `[params] claugUserId`, emitted as `data-claug-api` and `data-claug-user` attributes in the nav template.
+
+**JS bundling:** Hugo's `js.Build` (esbuild) bundles `live-status.js` + `@connectrpc/connect-web` + generated proto types into a single IIFE script. No separate JS build step needed.
+
+**Proto codegen:** Run `make generate` (or `npx buf generate`) to regenerate TypeScript types from the claug proto. The proto source lives in the claug repo (`../claug/proto/sessions/v1/sessions.proto`), not duplicated here.
 
 **Claude Code hooks** (`~/.claude/settings.json`):
 - `SessionStart` → `claug start` (registers session, starts daemon)

@@ -1,13 +1,47 @@
-(function() {
-  var dots = document.querySelectorAll('.cc-status-dot');
-  if (!dots.length) return;
+import { createClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-web";
+import { SessionService } from "./gen/sessions/v1/sessions_pb";
 
-  // Read WebSocket URL from Hugo param (data attribute on nav dot) or fall back to same-origin
-  var wsUrlEl = document.querySelector('[data-claug-ws]');
-  var wsUrl = wsUrlEl ? wsUrlEl.getAttribute('data-claug-ws') : '';
-  if (!wsUrl) {
-    wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/live';
+export function formatTokens(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+  return String(n);
+}
+
+export function formatTime(sec) {
+  if (sec < 60) return sec + 's';
+  var minutes = Math.floor(sec / 60);
+  var secs = sec % 60;
+  if (minutes < 60) {
+    return secs ? minutes + 'm ' + secs + 's' : minutes + 'm';
   }
+  var hours = Math.floor(minutes / 60);
+  var mins = minutes % 60;
+  var parts = [hours + 'h'];
+  if (mins) parts.push(mins + 'm');
+  return parts.join(' ');
+}
+
+export function escapeHTML(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+var dots = document.querySelectorAll('.cc-status-dot');
+if (dots.length) { init(); }
+
+function init() {
+  // Read Connect API URL and user ID from Hugo params (data attributes on nav dot)
+  var apiEl = document.querySelector('[data-claug-api]');
+  var apiUrl = apiEl ? apiEl.getAttribute('data-claug-api') : '';
+  var userId = apiEl ? apiEl.getAttribute('data-claug-user') : '';
+  if (!apiUrl) {
+    apiUrl = location.protocol + '//' + location.host;
+  }
+
+  var transport = createConnectTransport({ baseUrl: apiUrl });
+  var client = createClient(SessionService, transport);
 
   // Read base totals from data attributes (only on claude-log page)
   var baseTotals = {};
@@ -77,25 +111,6 @@
     return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   }
 
-  function formatTokens(n) {
-    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-    if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
-    return String(n);
-  }
-
-  function formatTime(sec) {
-    if (sec < 60) return sec + 's';
-    var minutes = Math.floor(sec / 60);
-    var secs = sec % 60;
-    if (minutes < 60) {
-      return secs ? minutes + 'm ' + secs + 's' : minutes + 'm';
-    }
-    var hours = Math.floor(minutes / 60);
-    var mins = minutes % 60;
-    var parts = [hours + 'h'];
-    if (mins) parts.push(mins + 'm');
-    return parts.join(' ');
-  }
 
   function updateStatDisplay(el, newText) {
     if (!el) return;
@@ -403,11 +418,6 @@
     }, 25);
   }
 
-  function escapeHTML(str) {
-    var div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
 
   function removeLiveSession(sessionId) {
     // Keep lastPromptSeen so reconnects don't re-trigger the typewriter
@@ -497,50 +507,72 @@
     }
   }, 30000);
 
-  function connect() {
-    var ws = new WebSocket(wsUrl);
+  // Map proto SessionMetrics to snake_case used by rendering code.
+  // Proto int64 fields are bigint — convert to Number for display math.
+  function mapProtoSession(metrics) {
+    return {
+      session_id: metrics.sessionId,
+      total_tokens: Number(metrics.totalTokens),
+      input_tokens: Number(metrics.inputTokens),
+      cache_read_input_tokens: Number(metrics.cacheReadInputTokens),
+      output_tokens: Number(metrics.outputTokens),
+      tool_calls: metrics.toolCalls,
+      tool_counts: Object.assign({}, metrics.toolCounts),
+      user_prompts: metrics.userPrompts,
+      active_time_seconds: metrics.activeTimeSeconds,
+      last_prompt: metrics.lastPrompt,
+      project: metrics.project,
+      model: metrics.model,
+      summary: metrics.summary,
+      started_at: metrics.startedAt,
+      ended_at: metrics.endedAt,
+      privacy_level: metrics.privacyLevel,
+      sensitive: metrics.privacyLevel === 'metrics_only' || metrics.privacyLevel === 'private'
+    };
+  }
 
-    ws.onmessage = function(e) {
-      var msg = JSON.parse(e.data);
+  function handleDisconnect() {
+    setActive(false);
+    for (var id in liveSessions) {
+      removeLiveSession(id);
+    }
+    liveSessions = {};
+    activeSessions = {};
+    lastHeartbeatAt = {};
+    recalcAggregates();
+    setTimeout(connect, 5000);
+  }
 
-      // Claug sends a "connected" event on connect — ignore it
-      if (msg.type === 'connected') return;
+  async function connect() {
+    try {
+      var stream = client.watchSessions({
+        scope: 'public_user',
+        userId: userId,
+      });
 
-      if (msg.type === 'heartbeat' && msg.payload) {
-        var sess = msg.payload;
-        // Map privacy_level to sensitive flag for backward compat
-        sess.sensitive = sess.privacy_level === 'metrics_only' || sess.privacy_level === 'private';
-        activeSessions[sess.session_id] = sess;
-        lastHeartbeatAt[sess.session_id] = Date.now();
-      }
-
-      if (msg.type === 'stop' && msg.payload && msg.payload.session_ids) {
-        for (var i = 0; i < msg.payload.session_ids.length; i++) {
-          delete activeSessions[msg.payload.session_ids[i]];
-          delete lastHeartbeatAt[msg.payload.session_ids[i]];
+      for await (var event of stream) {
+        if (event.type === 'heartbeat' && event.session) {
+          var sess = mapProtoSession(event.session);
+          activeSessions[sess.session_id] = sess;
+          lastHeartbeatAt[sess.session_id] = Date.now();
         }
+
+        if (event.type === 'stop' && event.sessionIds.length > 0) {
+          for (var i = 0; i < event.sessionIds.length; i++) {
+            delete activeSessions[event.sessionIds[i]];
+            delete lastHeartbeatAt[event.sessionIds[i]];
+          }
+        }
+
+        synthesizeState();
       }
 
-      synthesizeState();
-    };
-
-    ws.onclose = function() {
-      setActive(false);
-      // Clear live sessions on disconnect
-      for (var id in liveSessions) {
-        removeLiveSession(id);
-      }
-      liveSessions = {};
-      activeSessions = {};
-      lastHeartbeatAt = {};
-      recalcAggregates();
-      setTimeout(connect, 5000);
-    };
+      // Stream ended normally
+      handleDisconnect();
+    } catch (e) {
+      handleDisconnect();
+    }
   }
 
   connect();
-
-  if (typeof globalThis.__TEST__ !== 'undefined') {
-    globalThis.__liveStatus = { formatTokens, formatTime, escapeHTML };
-  }
-})();
+}
