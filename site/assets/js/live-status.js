@@ -136,8 +136,7 @@ function init() {
       frag.appendChild(span);
     }
 
-    el.innerHTML = '';
-    el.appendChild(frag);
+    el.replaceChildren(frag);
 
     // Remove enter class on next frame to trigger CSS transition
     requestAnimationFrame(function() {
@@ -408,7 +407,7 @@ function init() {
     el.textContent = '';
     el.classList.add('cc-typewriter-active');
     var idx = 0;
-    var CHUNK = 15;
+    var CHUNK = 15; // ~600 chars/sec at 25ms interval
 
     typewriterTimers[timerId] = setInterval(function() {
       if (idx < text.length) {
@@ -569,7 +568,7 @@ function init() {
       for (var cid in activeSessions) {
         lastHeartbeatAt[cid] = now;
       }
-      synthesizeState();
+      scheduleSynthesize();
     }
   } catch(e) {}
 
