@@ -1,4 +1,5 @@
 <nav class="site-nav">
+  <span id="cc-config" hidden data-claug-api="{{ .Site.Params.claugApiUrl }}" data-claug-user="{{ .Site.Params.claugUserId }}"></span>
   <div class="nav-inner">
     <a class="nav-home" href="/" aria-label="Home">
       {{ partial "icons/home.html" }}
@@ -12,7 +13,7 @@
     <ul class="nav-links">
       {{ range .Site.Menus.main }}
       <li>
-        <a href="{{ .URL }}">{{ .Name }}{{ if eq .Identifier "claude-log" }}<span id="cc-status" class="cc-status-dot" title="Claude Code: offline" data-claug-api="{{ $.Site.Params.claugApiUrl }}" data-claug-user="{{ $.Site.Params.claugUserId }}"></span>{{ end }}</a>
+        <a href="{{ .URL }}">{{ .Name }}{{ if eq .Identifier "claude-log" }}<span id="cc-status" class="cc-status-dot" title="Claude Code: offline"></span>{{ end }}</a>
       </li>
       {{ end }}
     </ul>
