@@ -123,23 +123,27 @@ function init() {
     var oldChars = oldText.padStart(maxLen).split('');
     var newChars = newText.padStart(maxLen).split('');
 
-    el.innerHTML = '';
+    var frag = document.createDocumentFragment();
+    var enterSpans = [];
     for (var i = 0; i < maxLen; i++) {
       var span = document.createElement('span');
       span.className = 'cc-digit';
       span.textContent = newChars[i];
       if (oldChars[i] !== newChars[i]) {
         span.classList.add('cc-digit-enter');
+        enterSpans.push(span);
       }
-      el.appendChild(span);
+      frag.appendChild(span);
     }
 
-    // Trigger reflow then remove enter class to animate
-    el.offsetHeight; // force reflow
-    var entering = el.querySelectorAll('.cc-digit-enter');
-    for (var j = 0; j < entering.length; j++) {
-      entering[j].classList.remove('cc-digit-enter');
-    }
+    el.replaceChildren(frag);
+
+    // Remove enter class on next frame to trigger CSS transition
+    requestAnimationFrame(function() {
+      for (var j = 0; j < enterSpans.length; j++) {
+        enterSpans[j].classList.remove('cc-digit-enter');
+      }
+    });
   }
 
   function recalcAggregates() {
@@ -403,11 +407,13 @@ function init() {
     el.textContent = '';
     el.classList.add('cc-typewriter-active');
     var idx = 0;
+    var CHUNK = 15; // ~600 chars/sec at 25ms interval
 
     typewriterTimers[timerId] = setInterval(function() {
       if (idx < text.length) {
-        el.textContent += text[idx];
-        idx++;
+        var end = Math.min(idx + CHUNK, text.length);
+        el.textContent = text.substring(0, end);
+        idx = end;
       } else {
         clearInterval(typewriterTimers[timerId]);
         delete typewriterTimers[timerId];
@@ -480,6 +486,18 @@ function init() {
     recalcAggregates();
   }
 
+  // Debounced synthesize — batch rapid stream events into one DOM update
+  var synthPending = false;
+  function scheduleSynthesize() {
+    if (!synthPending) {
+      synthPending = true;
+      requestAnimationFrame(function() {
+        synthPending = false;
+        synthesizeState();
+      });
+    }
+  }
+
   // Synthesize a full-state message from the activeSessions map
   function synthesizeState() {
     var sessions = [];
@@ -550,7 +568,7 @@ function init() {
       for (var cid in activeSessions) {
         lastHeartbeatAt[cid] = now;
       }
-      synthesizeState();
+      scheduleSynthesize();
     }
   } catch(e) {}
 
@@ -588,7 +606,7 @@ function init() {
           }
         }
 
-        synthesizeState();
+        scheduleSynthesize();
       }
 
       // Stream ended normally
