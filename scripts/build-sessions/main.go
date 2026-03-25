@@ -16,7 +16,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// claugAuthCredentials matches one entry in ~/.config/claug/auth.json (keyed by env name).
+// claugAuthFile represents the top-level structure of ~/.config/claug/auth.json.
+type claugAuthFile struct {
+	Version     string                            `json:"version"`
+	Credentials map[string]*claugAuthCredentials `json:"credentials"`
+}
+
+// claugAuthCredentials matches one entry in ~/.config/claug/auth.json.
 type claugAuthCredentials struct {
 	Token  string `json:"token,omitempty"`
 	APIKey string `json:"api_key"`
@@ -248,12 +254,12 @@ func loadResolvedConfig() resolvedConfig {
 		log.Fatalf("reading %s: %v\nRun 'claug login' to authenticate.", authFile, err)
 	}
 
-	var allCreds map[string]*claugAuthCredentials
-	if err := json.Unmarshal(authData, &allCreds); err != nil {
+	var authJSON claugAuthFile
+	if err := json.Unmarshal(authData, &authJSON); err != nil {
 		log.Fatalf("parsing %s: %v", authFile, err)
 	}
 
-	creds, ok := allCreds[env]
+	creds, ok := authJSON.Credentials[env]
 	if !ok || creds.APIKey == "" {
 		log.Fatalf("no api_key found for env %q in %s. Run 'claug login' to authenticate.", env, authFile)
 	}
