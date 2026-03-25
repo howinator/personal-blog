@@ -28,17 +28,18 @@ export function escapeHTML(str) {
   return div.innerHTML;
 }
 
-var dots = document.querySelectorAll('.cc-status-dot');
-if (dots.length) { init(); }
+var configEl = document.getElementById('cc-config');
+if (configEl) { init(); }
 
 function init() {
-  // Read Connect API URL and user ID from Hugo params (data attributes on nav dot)
-  var apiEl = document.querySelector('[data-claug-api]');
-  var apiUrl = apiEl ? apiEl.getAttribute('data-claug-api') : '';
-  var userId = apiEl ? apiEl.getAttribute('data-claug-user') : '';
+  // Read Connect API URL and user ID from hidden config element
+  var apiUrl = configEl.getAttribute('data-claug-api') || '';
+  var userId = configEl.getAttribute('data-claug-user') || '';
   if (!apiUrl) {
     apiUrl = location.protocol + '//' + location.host;
   }
+
+  var dots = document.querySelectorAll('.cc-status-dot');
 
   var transport = createConnectTransport({ baseUrl: apiUrl });
   var client = createClient(SessionService, transport);
@@ -489,6 +490,15 @@ function init() {
       active: sessions.length > 0,
       sessions: sessions
     });
+
+    // Cache active sessions for instant hydration on page navigation
+    try {
+      if (sessions.length > 0) {
+        sessionStorage.setItem('claug-sessions', JSON.stringify(activeSessions));
+      } else {
+        sessionStorage.removeItem('claug-sessions');
+      }
+    } catch(e) {}
   }
 
   // Client-side inactivity timeout (90s) — safety net for crashed daemons
@@ -531,6 +541,19 @@ function init() {
     };
   }
 
+  // Hydrate from sessionStorage for instant display on page load
+  try {
+    var cached = sessionStorage.getItem('claug-sessions');
+    if (cached) {
+      activeSessions = JSON.parse(cached);
+      var now = Date.now();
+      for (var cid in activeSessions) {
+        lastHeartbeatAt[cid] = now;
+      }
+      synthesizeState();
+    }
+  } catch(e) {}
+
   function handleDisconnect() {
     setActive(false);
     for (var id in liveSessions) {
@@ -540,6 +563,7 @@ function init() {
     activeSessions = {};
     lastHeartbeatAt = {};
     recalcAggregates();
+    try { sessionStorage.removeItem('claug-sessions'); } catch(e) {}
     setTimeout(connect, 5000);
   }
 
