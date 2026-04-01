@@ -28,8 +28,6 @@ oncreate() {
       cp "$MAIN_REPO/site/data/cc_sessions.json" "$WORK_DIR/site/data/cc_sessions.json"
     fi
 
-    # Install node dependencies (worktrees don't have node_modules)
-    pnpm install --frozen-lockfile -C "$WORK_DIR"
   fi
 
   # --- Tmux layout ---
@@ -39,6 +37,11 @@ oncreate() {
 
   # Split bottom pane into two side-by-side
   tmux split-window -h -c "$WORK_DIR"
+
+  # Pane 2: install node dependencies in worktrees (they don't have node_modules)
+  if [[ -n "$MAIN_REPO" && "$MAIN_REPO" != "$WORK_DIR" ]]; then
+    tmux send-keys -t :.2 "pnpm install --frozen-lockfile" Enter
+  fi
 
   # Pane 1: claude code (prefill prompt, don't send)
   tmux select-pane -t :.1
