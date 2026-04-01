@@ -123,16 +123,14 @@ describe('sessionStorage hydration', () => {
     await import('./live-status.js');
 
     // Let scheduleSynthesize (requestAnimationFrame) fire
-    vi.advanceTimersByTime(0);
-    await vi.runAllTicksAsync();
+    await vi.advanceTimersByTimeAsync(16);
 
     var dot = document.querySelector('.cc-status-dot');
     expect(dot.classList.contains('active')).toBe(true);
 
     // Advance past the 30s inactivity check interval — the hydrated session's
     // heartbeat was set to now-80000, so it's now >90s stale and should expire
-    vi.advanceTimersByTime(30000);
-    await vi.runAllTicksAsync();
+    await vi.advanceTimersByTimeAsync(30000);
 
     expect(dot.classList.contains('active')).toBe(false);
     expect(sessionStorage.getItem('claug-sessions')).toBeNull();
