@@ -566,7 +566,7 @@ function init() {
       activeSessions = JSON.parse(cached);
       var now = Date.now();
       for (var cid in activeSessions) {
-        lastHeartbeatAt[cid] = now;
+        lastHeartbeatAt[cid] = now - 80000;
       }
       scheduleSynthesize();
     }

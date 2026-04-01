@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
 
 vi.mock('@connectrpc/connect', () => ({
   createClient: () => ({
@@ -67,5 +67,72 @@ describe('escapeHTML', () => {
 
   it('passes through safe strings', () => {
     expect(escapeHTML('hello world')).toBe('hello world');
+  });
+});
+
+describe('sessionStorage hydration', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    sessionStorage.clear();
+  });
+
+  it('clears stale cached sessions after inactivity timeout', async () => {
+    // Seed sessionStorage with a stale session
+    var staleSession = {
+      'test-session-123': {
+        session_id: 'test-session-123',
+        total_tokens: 1000,
+        input_tokens: 500,
+        output_tokens: 500,
+        cache_read_input_tokens: 0,
+        tool_calls: 5,
+        user_prompts: 2,
+        active_time_seconds: 60,
+        last_prompt: 'test prompt',
+        project: 'test',
+        model: 'claude',
+        summary: 'test session',
+      }
+    };
+    sessionStorage.setItem('claug-sessions', JSON.stringify(staleSession));
+
+    // Set up DOM with config element so init() runs, then re-import
+    document.body.innerHTML =
+      '<span id="cc-config" data-claug-api="http://localhost" data-claug-user="user1"></span>' +
+      '<span class="cc-status-dot"></span>';
+
+    vi.resetModules();
+
+    // Re-mock dependencies before re-import
+    vi.doMock('@connectrpc/connect', () => ({
+      createClient: () => ({
+        watchSessions: () => ({ [Symbol.asyncIterator]: () => ({ next: () => new Promise(() => {}) }) })
+      })
+    }));
+    vi.doMock('@connectrpc/connect-web', () => ({
+      createConnectTransport: () => ({})
+    }));
+    vi.doMock('./gen/sessions/v1/sessions_pb', () => ({
+      SessionService: {}
+    }));
+
+    await import('./live-status.js');
+
+    // Let scheduleSynthesize (requestAnimationFrame) fire
+    await vi.advanceTimersByTimeAsync(16);
+
+    var dot = document.querySelector('.cc-status-dot');
+    expect(dot.classList.contains('active')).toBe(true);
+
+    // Advance past the 30s inactivity check interval — the hydrated session's
+    // heartbeat was set to now-80000, so it's now >90s stale and should expire
+    await vi.advanceTimersByTimeAsync(30000);
+
+    expect(dot.classList.contains('active')).toBe(false);
+    expect(sessionStorage.getItem('claug-sessions')).toBeNull();
   });
 });
